@@ -9,7 +9,9 @@ import { CommonModule } from '@angular/common';
   template: `
     <header>
       <nav>
-        <a routerLink="/">Angor Hub</a>
+        <a routerLink="/" class="logo-link">
+          <img src="images/logo-text.svg" alt="Angor Hub Logo" class="logo">
+        </a>
         <div class="nav-links">
           <a routerLink="/explore">Explore</a>
           <a routerLink="/project">Projects</a>

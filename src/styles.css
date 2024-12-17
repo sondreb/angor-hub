@@ -1,8 +1,15 @@
 /* You can add global styles to this file, and also import other style files */
 
-body {
+html, body {
   margin: 0;
+  padding: 0;
+  height: 100%;
+  overscroll-behavior: none;
+}
+
+body {
   font-family: Arial, sans-serif;
+  overflow-x: hidden;
 }
 
 header {
@@ -26,6 +33,16 @@ nav a {
 
 .nav-links a {
   margin-left: 1rem;
+}
+
+.logo {
+  height: 32px;
+  width: auto;
+}
+
+.logo-link {
+  display: flex;
+  align-items: center;
 }
 
 main {
