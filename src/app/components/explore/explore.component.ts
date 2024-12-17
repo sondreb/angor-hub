@@ -20,15 +20,23 @@ import { IndexerService } from '../../services/indexer.service';
     </section>
 
     <div class="container">
-      <section class="projects">
-        @for (project of indexer.projects(); track project.projectIdentifier) {
-          <div class="project-card">
-            <h3>{{project.projectIdentifier}}</h3>
-            <p>Created on block: {{project.createdOnBlock}}</p>
-            <p>Founder: {{project.founderKey}}</p>
-          </div>
-        }
-      </section>
+      @if (indexer.loading()) {
+        <div class="loading-spinner">
+          <div class="spinner"></div>
+        </div>
+      } @else if (indexer.projects().length === 0) {
+        <p class="text-center">No projects found.</p>
+      } @else {
+        <section class="projects">
+          @for (project of indexer.projects(); track project.projectIdentifier) {
+            <div class="project-card">
+              <h3>{{project.projectIdentifier}}</h3>
+              <p>Created on block: {{project.createdOnBlock}}</p>
+              <p>Founder: {{project.founderKey}}</p>
+            </div>
+          }
+        </section>
+      }
     </div>
   `,
 })
