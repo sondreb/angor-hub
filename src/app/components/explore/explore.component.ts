@@ -19,7 +19,7 @@ import { IndexerService } from '../../services/indexer.service';
     </section>
 
     <div class="container">
-      @if (indexer.loading()) {
+      @if (indexer.loading() && !indexer.projects().length) {
         <div class="loading-spinner">
           <div class="spinner"></div>
         </div>
@@ -35,6 +35,20 @@ import { IndexerService } from '../../services/indexer.service';
             </div>
           }
         </section>
+
+        @if (!indexer.loading() && !indexer.isComplete()) {
+          <div class="load-more">
+            <button class="primary-button" (click)="loadMore()">
+              Load More Projects
+            </button>
+          </div>
+        }
+
+        @if (indexer.loading()) {
+          <div class="loading-spinner">
+            <div class="spinner"></div>
+          </div>
+        }
       }
     </div>
   `,
@@ -48,5 +62,9 @@ export class ExploreComponent {
     await this.indexer.fetchProjects();
     console.log(this.indexer);
     // console.log(this.relay);
+  }
+
+  async loadMore() {
+    await this.indexer.loadMore();
   }
 }

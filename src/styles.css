@@ -249,3 +249,13 @@ footer {
   text-align: center;
   margin: 2rem 0;
 }
+
+.load-more {
+  display: flex;
+  justify-content: center;
+  margin: 2rem 0;
+}
+
+.load-more button {
+  min-width: 200px;
+}

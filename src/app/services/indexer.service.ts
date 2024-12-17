@@ -13,7 +13,7 @@ interface IndexedProject {
   providedIn: 'root'
 })
 export class IndexerService {
-  private readonly LIMIT = 20;
+  private readonly LIMIT = 6;
   private readonly indexerUrl = 'https://tbtc.indexer.angor.io/';
   private offset = 0;
   private totalProjectsFetched = false;
@@ -39,11 +39,9 @@ export class IndexerService {
       this.loading.set(true);
       this.error.set(null);
 
-      const url = `${this.indexerUrl}api/query/Angor/projects?${
-        this.totalProjectsFetched ? `offset=${this.offset}&` : ''
-      }limit=${this.LIMIT}`;
+      const url = `${this.indexerUrl}api/query/Angor/projects?offset=${this.offset}&limit=${this.LIMIT}`;
 
-      console.log(url);
+      console.log('Fetching:', url);
 
       const response = await this.http.get<IndexedProject[]>(url).toPromise();
       
@@ -70,5 +68,9 @@ export class IndexerService {
 
   resetProjects(): void {
     this.fetchProjects(true);
+  }
+
+  isComplete(): boolean {
+    return this.totalProjectsFetched;
   }
 }
