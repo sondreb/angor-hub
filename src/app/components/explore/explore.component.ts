@@ -1,4 +1,6 @@
-import { Component } from '@angular/core';
+import { Component, inject } from '@angular/core';
+import { RelayService } from '../../services/relay.service';
+import { IndexerService } from '../../services/indexer.service';
 
 @Component({
   selector: 'app-explore',
@@ -16,4 +18,15 @@ import { Component } from '@angular/core';
     </section>
   `
 })
-export class ExploreComponent {}
+export class ExploreComponent {
+  // relay = inject(RelayService);
+
+  indexer = inject(IndexerService);
+
+  async ngOnInit() {
+    const projects = await this.indexer.fetchProjects();
+    console.log(projects);
+    console.log(this.indexer);
+    // console.log(this.relay);
+  }
+}
