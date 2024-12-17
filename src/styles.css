@@ -214,7 +214,8 @@ footer {
   display: flex;
   justify-content: center;
   padding: 1rem;
-  margin: 2rem 0;
+  margin: 1rem 0;
+  visibility: visible; /* Ensure spinner is visible */
 }
 
 .spinner {
@@ -250,9 +251,17 @@ footer {
   margin: 2rem 0;
 }
 
+.scroll-trigger {
+  height: 20px;
+  width: 100%;
+  margin: 2rem 0;
+  opacity: 0; /* Instead of visibility: hidden */
+}
+
 .load-more {
   display: flex;
   justify-content: center;
+  width: 100%;
   margin: 2rem 0;
 }
 
