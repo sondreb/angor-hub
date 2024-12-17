@@ -27,8 +27,8 @@ import { IndexerService } from '../../services/indexer.service';
         <p class="text-center">No projects found.</p>
       } @else {
         <section class="projects">
-          @for (project of indexer.projects(); track project.projectIdentifier) {
-            <div class="project-card">
+          @for (project of indexer.projects(); track project.projectIdentifier; let i = $index) {
+            <div class="project-card" [attr.data-index]="i">
               <h3>{{project.projectIdentifier}}</h3>
               <p>Created on block: {{project.createdOnBlock}}</p>
               <p>Founder: {{project.founderKey}}</p>
