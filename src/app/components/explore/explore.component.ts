@@ -9,7 +9,7 @@ import { IndexerService } from '../../services/indexer.service';
     <section class="hero">
       <div class="hero-wrapper">
         <div class="hero-content">
-          <p>Explore Projects</p>
+          <strong>Explore Projects</strong>
           <h1 class="hero-subtitle">What's your next investment?</h1>
           <p class="hero-description">
             Check out our projects and find your next investment opportunity.

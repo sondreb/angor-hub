@@ -22,6 +22,15 @@
   --accent-light: #0CAAC9;
 }
 
+/* Inter Variable Font */
+@font-face {
+  font-family: 'Inter';
+  src: url('/assets/fonts/inter/Inter-VariableFont_opsz,wght.ttf') format('truetype-variations');
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 html, body {
   margin: 0;
   padding: 0;
@@ -30,7 +39,7 @@ html, body {
 }
 
 body {
-  font-family: Arial, sans-serif;
+  font-family: 'Inter', sans-serif;
   overflow-x: hidden;
   background-color: var(--background);
   color: var(--text);
@@ -79,12 +88,13 @@ nav a:hover {
 
 main {
   min-height: calc(100vh - 160px);
-  padding: 2rem;
+  padding: 0;
 }
 
 .container {
   max-width: 1200px;
   margin: 0 auto;
+  padding: 0;
 }
 
 footer {
@@ -96,7 +106,7 @@ footer {
 
 /* Hero Styles */
 .hero {
-  padding: 2rem 1rem;
+  padding: 1.5rem 1rem;
   background: linear-gradient(to bottom, var(--header-bg), var(--background));
   border-bottom: 1px solid var(--border);
   text-align: center;
@@ -111,13 +121,13 @@ footer {
 .hero-content {
   max-width: 500px;
   margin: 0 auto;
-  padding: 0.5rem;
+  padding: 0;
 }
 
 .hero h1 {
-  font-size: 2.25rem;
+  font-size: 2rem;
   font-weight: 800;
-  margin-bottom: 0.5rem;
+  margin: 0.25rem 0;
   letter-spacing: -0.5px;
   background: linear-gradient(45deg, var(--text), var(--accent));
   -webkit-background-clip: text;
@@ -127,7 +137,7 @@ footer {
 
 .hero-subtitle {
   font-size: 1.25rem;
-  margin-bottom: 0.5rem;
+  margin-bottom: 0.25rem;
   color: var(--text);
   opacity: 0.9;
   font-weight: 500;
@@ -135,7 +145,7 @@ footer {
 
 .hero-description {
   font-size: 1rem;
-  margin-bottom: 1rem;
+  margin-bottom: 0.75rem;
   color: var(--text);
   opacity: 0.7;
   line-height: 1.4;
@@ -162,9 +172,9 @@ footer {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
   gap: 2rem;
-  padding: 2rem;
+  padding: 0;
   max-width: 1200px;
-  margin: 0 auto;
+  margin: 2rem 2rem;
 }
 
 .project-card {
@@ -203,7 +213,8 @@ footer {
 .loading-spinner {
   display: flex;
   justify-content: center;
-  padding: 2rem;
+  padding: 1rem;
+  margin: 2rem 0;
 }
 
 .spinner {
@@ -232,4 +243,9 @@ footer {
 
 .primary-button:hover {
   background-color: var(--accent-dark);
+}
+
+.text-center {
+  text-align: center;
+  margin: 2rem 0;
 }
