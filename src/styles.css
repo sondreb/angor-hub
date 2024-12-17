@@ -4,12 +4,16 @@
   --background: #ffffff;
   --text: #000000;
   --border: #e0e0e0;
+  --header-bg: #f8f9fa;
+  --header-text: #333333;
 }
 
 [data-theme="dark"] {
   --background: #1a1a1a;
   --text: #ffffff;
   --border: #333333;
+  --header-bg: #333333;
+  --header-text: #ffffff;
 }
 
 html, body {
@@ -31,7 +35,7 @@ body {
 }
 
 header {
-  background: #333;
+  background: var(--header-bg);
   padding: 1rem;
 }
 
@@ -44,7 +48,7 @@ nav {
 }
 
 nav a {
-  color: white;
+  color: var(--header-text);
   text-decoration: none;
   padding: 0.5rem 1rem;
 }
@@ -74,8 +78,8 @@ main {
 }
 
 footer {
-  background: #333;
-  color: white;
+  background: var(--header-bg);
+  color: var(--header-text);
   text-align: center;
   padding: 1rem;
 }
