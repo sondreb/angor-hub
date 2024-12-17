@@ -31,8 +31,8 @@ jobs:
       - name: Build
         run: npm run build
 
-      - name: Create CNAME file
-        run: echo "angor-hub.brainbox.no" > ./dist/angor-hub/browser/CNAME
+    #   - name: Create CNAME file
+    #     run: echo "angor-hub.brainbox.no" > ./dist/angor-hub/browser/CNAME
 
       - name: Setup Pages
         uses: actions/configure-pages@v3
