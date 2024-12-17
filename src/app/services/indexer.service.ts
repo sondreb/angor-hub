@@ -14,7 +14,7 @@ interface IndexedProject {
 })
 export class IndexerService {
   private readonly LIMIT = 20;
-  private readonly indexerUrl = 'https://tbtc.indexer.angor.io/'; // Replace with actual indexer URL
+  private readonly indexerUrl = 'https://tbtc.indexer.angor.io/';
   private offset = 0;
   private totalProjectsFetched = false;
 
