@@ -9,9 +9,6 @@ permissions:
   pages: write
   id-token: write
 
-env:
-  DOMAIN: angor-hub.brainbox.no
-
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -30,9 +27,6 @@ jobs:
 
       - name: Build
         run: npm run build
-
-    #   - name: Create CNAME file
-    #     run: echo "angor-hub.brainbox.no" > ./dist/angor-hub/browser/CNAME
 
       - name: Setup Pages
         uses: actions/configure-pages@v3

@@ -19,15 +19,17 @@ import { IndexerService } from '../../services/indexer.service';
       </div>
     </section>
 
-    <section class="projects">
-      @for (project of indexer.projects(); track project.projectIdentifier) {
-        <div class="project-card">
-          <h3>{{project.projectIdentifier}}</h3>
-          <p>Created on block: {{project.createdOnBlock}}</p>
-          <p>Founder: {{project.founderKey}}</p>
-        </div>
-      }
-    </section>
+    <div class="container">
+      <section class="projects">
+        @for (project of indexer.projects(); track project.projectIdentifier) {
+          <div class="project-card">
+            <h3>{{project.projectIdentifier}}</h3>
+            <p>Created on block: {{project.createdOnBlock}}</p>
+            <p>Founder: {{project.founderKey}}</p>
+          </div>
+        }
+      </section>
+    </div>
   `,
 })
 export class ExploreComponent {
