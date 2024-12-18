@@ -7,6 +7,7 @@ import {
   OnDestroy,
   OnInit,
   HostListener,
+  effect,
 } from '@angular/core';
 import { RelayService } from '../../services/relay.service';
 import { IndexerService } from '../../services/indexer.service';
@@ -14,12 +15,39 @@ import { RouterLink } from '@angular/router';
 import { ExploreStateService } from '../../services/explore-state.service';
 import { Router } from '@angular/router';
 import { BreadcrumbComponent } from '../../components/breadcrumb.component';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'app-explore',
   standalone: true,
-  imports: [RouterLink, BreadcrumbComponent],
-  styles: [], // Remove fade-out animation styles
+  imports: [RouterLink, BreadcrumbComponent, CommonModule],
+  styles: [
+    `.truncate {
+      max-width: 150px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      display: inline-block;
+    }
+    .loading-profile {
+      font-style: italic;
+      color: #666;
+      margin-left: 0.5em;
+    }
+    .about {
+      margin-top: 0.5em;
+      font-style: italic;
+    }
+    .project-details {
+      margin-top: 1rem;
+      padding-top: 1rem;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+    .project-details p {
+      margin: 0.25rem 0;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+    }`
+  ], // Remove fade-out animation styles
   template: `
     <app-breadcrumb [items]="[
       { label: 'Home', url: '/' },
@@ -58,14 +86,26 @@ import { BreadcrumbComponent } from '../../components/breadcrumb.component';
           <p>Created on block: {{ project.createdOnBlock }}</p>
           <p>
             Founder: 
-            @if (project.profile?.name) {
-              {{ project.profile?.name }}
+            @if (project.metadata?.name) {
+              {{ project.metadata?.name }}
             } @else {
-              {{ project.founderKey }}
+              <span class="truncate">{{ project.founderKey }}</span>
+              <small class="loading-profile">Loading profile...</small>
             }
           </p>
-          @if (project.profile?.about) {
-            <p>{{ project.profile?.about }}</p>
+          @if (project.metadata?.about) {
+            <p class="about">{{ project.metadata?.about }}</p>
+          }
+          
+          <!-- Add new project details -->
+          @if (project.details) {
+            <div class="project-details">
+              <p>Stages: {{ project.details.stages.length }}</p>
+              <p>Start Date: {{ project.details.startDate | date }}</p>
+              <p>Expiry Date: {{ project.details.expiryDate | date }}</p>
+              <p>Penalty Days: {{ project.details.penaltyDays }}</p>
+              <p>Target Amount: {{ project.details.targetAmount / 100000000 }} BTC</p>
+            </div>
           }
         </a>
         }
@@ -98,6 +138,15 @@ export class ExploreComponent implements OnInit, AfterViewInit, OnDestroy {
   private router = inject(Router);
 
   indexer = inject(IndexerService);
+
+  constructor() {
+    // Optional: Subscribe to project updates if you need to trigger any UI updates
+    effect(() => {
+      const projects = this.indexer.projects();
+      // Handle any side effects when projects update
+      console.log('Projects updated:', projects.length);
+    });
+  }
 
   async ngOnInit() {
     this.watchForScrollTrigger();

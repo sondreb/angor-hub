@@ -1,4 +1,4 @@
-import { Injectable, signal, inject } from '@angular/core';
+import { Injectable, signal, inject, effect } from '@angular/core';
 import { RelayService } from './relay.service';
 
 export interface IndexedProject {
@@ -11,6 +11,23 @@ export interface IndexedProject {
     name?: string;
     picture?: string;
     about?: string;
+  };
+  details?: {
+    founderKey: string;
+    founderRecoveryKey: string;
+    projectIdentifier: string;
+    nostrPubKey: string;
+    startDate: number;
+    penaltyDays: number;
+    expiryDate: number;
+    targetAmount: number;
+    stages: { amountToRelease: number; releaseDate: number }[];
+    projectSeeders: { threshold: number; secretHashes: string[] }[];
+  };
+  metadata?: {
+    name?: string;
+    about?: string;
+    picture?: string;
   };
 }
 
@@ -62,7 +79,7 @@ export interface NetworkStats {
 }
 
 @Injectable({
-  providedIn: 'root'
+  providedIn: 'root',
 })
 export class IndexerService {
   private readonly LIMIT = 6;
@@ -75,7 +92,16 @@ export class IndexerService {
   public projects = signal<IndexedProject[]>([]);
   public error = signal<string | null>(null);
 
-  constructor() {}
+  constructor() {
+    // Subscribe to both profile and project updates
+    this.relay.profileUpdates.subscribe((update) => {
+      this.updateProjectMetadata(update.pubkey, update.profile);
+    });
+
+    this.relay.projectUpdates.subscribe((update) => {
+      this.updateProjectDetails(update);
+    });
+  }
 
   private async fetchJson<T>(url: string): Promise<T> {
     const response = await fetch(url);
@@ -83,6 +109,34 @@ export class IndexerService {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     return response.json();
+  }
+
+  private updateProjectProfile(pubkey: string, profile: any) {
+    this.projects.update((projects) =>
+      projects.map((project) =>
+        project.founderKey === pubkey ? { ...project, profile } : project
+      )
+    );
+  }
+
+  private updateProjectMetadata(pubkey: string, metadata: any) {
+    this.projects.update((projects) =>
+      projects.map((project) =>
+        project.founderKey === pubkey
+          ? { ...project, metadata }
+          : project
+      )
+    );
+  }
+
+  private updateProjectDetails(details: any) {
+    this.projects.update((projects) =>
+      projects.map((project) =>
+        project.projectIdentifier === details.projectIdentifier
+          ? { ...project, details }
+          : project
+      )
+    );
   }
 
   async fetchProjects(reset = false): Promise<void> {
@@ -105,43 +159,55 @@ export class IndexerService {
       console.log('Fetching:', url);
 
       const response = await this.fetchJson<IndexedProject[]>(url);
-      
+
+      console.log('Fetched:', url);
+
       if (Array.isArray(response)) {
         if (response.length < this.LIMIT) {
           this.totalProjectsFetched = true;
         }
 
-        // Fetch profiles for each project
-        await Promise.all(
-          response.map(async (project) => {
-            project.profile = await this.relay.fetchProfile(project.founderKey);
-          })
-        );
-
-        this.projects.update(existing => [...existing, ...response]);
+        // First update the UI with projects
+        this.projects.update((existing) => [...existing, ...response]);
         this.offset += response.length;
+
+        // Fetch all profiles in one batch
+        // const pubkeys = response.map((project) => project.projectIdentifier);
+        const eventIds = response.map((project) => project.nostrEventId);
+
+        if (eventIds.length > 0) {
+          this.relay.fetchData(eventIds);
+          // this.relay.fetchProfile(pubkeys);
+        }
       }
     } catch (err) {
-      this.error.set(err instanceof Error ? err.message : 'Failed to fetch projects');
+      this.error.set(
+        err instanceof Error ? err.message : 'Failed to fetch projects'
+      );
     } finally {
       this.loading.set(false);
     }
   }
 
   getProject(id: string): IndexedProject | undefined {
-    return this.projects().find(p => p.projectIdentifier === id);
+    return this.projects().find((p) => p.projectIdentifier === id);
   }
 
   async fetchProject(id: string): Promise<IndexedProject | null> {
     try {
       this.loading.set(true);
-      const project = await this.fetchJson<IndexedProject>(`${this.indexerUrl}api/query/Angor/projects/${id}`);
+      const project = await this.fetchJson<IndexedProject>(
+        `${this.indexerUrl}api/query/Angor/projects/${id}`
+      );
       if (project) {
-        project.profile = await this.relay.fetchProfile(project.founderKey);
+        // Fetch profile in an array of one
+        this.relay.fetchProfile([project.founderKey]);
       }
       return project;
     } catch (err) {
-      this.error.set(err instanceof Error ? err.message : `Failed to fetch project ${id}`);
+      this.error.set(
+        err instanceof Error ? err.message : `Failed to fetch project ${id}`
+      );
       return null;
     } finally {
       this.loading.set(false);
@@ -153,32 +219,49 @@ export class IndexerService {
       this.loading.set(true);
       const url = `${this.indexerUrl}api/query/Angor/projects/${id}/stats`;
       console.log('Fetching project stats:', url);
-      
+
       return await this.fetchJson<ProjectStats>(url);
     } catch (err) {
-      this.error.set(err instanceof Error ? err.message : `Failed to fetch stats for project ${id}`);
+      this.error.set(
+        err instanceof Error
+          ? err.message
+          : `Failed to fetch stats for project ${id}`
+      );
       return null;
     } finally {
       this.loading.set(false);
     }
   }
 
-  async fetchProjectInvestments(projectId: string, offset = 0, limit = 10): Promise<ProjectInvestment[]> {
+  async fetchProjectInvestments(
+    projectId: string,
+    offset = 0,
+    limit = 10
+  ): Promise<ProjectInvestment[]> {
     try {
       const url = `${this.indexerUrl}api/query/Angor/projects/${projectId}/investments?offset=${offset}&limit=${limit}`;
       return await this.fetchJson<ProjectInvestment[]>(url);
     } catch (err) {
-      this.error.set(err instanceof Error ? err.message : `Failed to fetch investments for project ${projectId}`);
+      this.error.set(
+        err instanceof Error
+          ? err.message
+          : `Failed to fetch investments for project ${projectId}`
+      );
       return [];
     }
   }
 
-  async fetchInvestorDetails(projectId: string, investorKey: string): Promise<ProjectInvestment | null> {
+  async fetchInvestorDetails(
+    projectId: string,
+    investorKey: string
+  ): Promise<ProjectInvestment | null> {
     try {
       const url = `${this.indexerUrl}api/query/Angor/projects/${projectId}/investments/${investorKey}`;
       return await this.fetchJson<ProjectInvestment>(url);
     } catch (err) {
-      this.error.set(err instanceof Error ? err.message : 'Failed to fetch investor details');
+      this.error.set(
+        err instanceof Error ? err.message : 'Failed to fetch investor details'
+      );
       return null;
     }
   }
@@ -188,7 +271,9 @@ export class IndexerService {
       const url = `${this.indexerUrl}api/insight/supply`;
       return await this.fetchJson<Supply>(url);
     } catch (err) {
-      this.error.set(err instanceof Error ? err.message : 'Failed to fetch supply');
+      this.error.set(
+        err instanceof Error ? err.message : 'Failed to fetch supply'
+      );
       return null;
     }
   }
@@ -198,7 +283,11 @@ export class IndexerService {
       const url = `${this.indexerUrl}api/insight/supply/circulating`;
       return await this.fetchJson<number>(url);
     } catch (err) {
-      this.error.set(err instanceof Error ? err.message : 'Failed to fetch circulating supply');
+      this.error.set(
+        err instanceof Error
+          ? err.message
+          : 'Failed to fetch circulating supply'
+      );
       return 0;
     }
   }
@@ -208,17 +297,27 @@ export class IndexerService {
       const url = `${this.indexerUrl}api/query/address/${address}`;
       return await this.fetchJson<AddressBalance>(url);
     } catch (err) {
-      this.error.set(err instanceof Error ? err.message : 'Failed to fetch address balance');
+      this.error.set(
+        err instanceof Error ? err.message : 'Failed to fetch address balance'
+      );
       return null;
     }
   }
 
-  async getAddressTransactions(address: string, offset = 0, limit = 10): Promise<Transaction[]> {
+  async getAddressTransactions(
+    address: string,
+    offset = 0,
+    limit = 10
+  ): Promise<Transaction[]> {
     try {
       const url = `${this.indexerUrl}api/query/address/${address}/transactions?offset=${offset}&limit=${limit}`;
       return await this.fetchJson<Transaction[]>(url);
     } catch (err) {
-      this.error.set(err instanceof Error ? err.message : 'Failed to fetch address transactions');
+      this.error.set(
+        err instanceof Error
+          ? err.message
+          : 'Failed to fetch address transactions'
+      );
       return [];
     }
   }
@@ -228,7 +327,9 @@ export class IndexerService {
       const url = `${this.indexerUrl}api/query/transaction/${txId}`;
       return await this.fetchJson<Transaction>(url);
     } catch (err) {
-      this.error.set(err instanceof Error ? err.message : 'Failed to fetch transaction');
+      this.error.set(
+        err instanceof Error ? err.message : 'Failed to fetch transaction'
+      );
       return null;
     }
   }
@@ -239,17 +340,23 @@ export class IndexerService {
       const response = await this.fetchJson<string>(url);
       return response !== undefined ? response : null;
     } catch (err) {
-      this.error.set(err instanceof Error ? err.message : 'Failed to fetch transaction hex');
+      this.error.set(
+        err instanceof Error ? err.message : 'Failed to fetch transaction hex'
+      );
       return null;
     }
   }
 
   async getBlocks(offset?: number, limit = 10): Promise<Block[]> {
     try {
-      const url = `${this.indexerUrl}api/query/block?${offset !== undefined ? `offset=${offset}&` : ''}limit=${limit}`;
+      const url = `${this.indexerUrl}api/query/block?${
+        offset !== undefined ? `offset=${offset}&` : ''
+      }limit=${limit}`;
       return await this.fetchJson<Block[]>(url);
     } catch (err) {
-      this.error.set(err instanceof Error ? err.message : 'Failed to fetch blocks');
+      this.error.set(
+        err instanceof Error ? err.message : 'Failed to fetch blocks'
+      );
       return [];
     }
   }
@@ -259,7 +366,9 @@ export class IndexerService {
       const url = `${this.indexerUrl}api/query/block/${hash}`;
       return await this.fetchJson<Block>(url);
     } catch (err) {
-      this.error.set(err instanceof Error ? err.message : 'Failed to fetch block');
+      this.error.set(
+        err instanceof Error ? err.message : 'Failed to fetch block'
+      );
       return null;
     }
   }
@@ -269,7 +378,9 @@ export class IndexerService {
       const url = `${this.indexerUrl}api/query/block/index/${height}`;
       return await this.fetchJson<Block>(url);
     } catch (err) {
-      this.error.set(err instanceof Error ? err.message : 'Failed to fetch block by height');
+      this.error.set(
+        err instanceof Error ? err.message : 'Failed to fetch block by height'
+      );
       return null;
     }
   }
@@ -280,7 +391,9 @@ export class IndexerService {
       const response = await this.fetchJson<NetworkStats>(url);
       return response !== undefined ? response : null;
     } catch (err) {
-      this.error.set(err instanceof Error ? err.message : 'Failed to fetch network stats');
+      this.error.set(
+        err instanceof Error ? err.message : 'Failed to fetch network stats'
+      );
       return null;
     }
   }

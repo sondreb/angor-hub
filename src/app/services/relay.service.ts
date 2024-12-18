@@ -1,12 +1,47 @@
 import { Injectable, signal, effect } from '@angular/core';
 import { SimplePool, Filter, Event, Relay } from 'nostr-tools';
 import NDK, { NDKEvent } from '@nostr-dev-kit/ndk';
+import { Subject } from 'rxjs';
+
+export interface ProfileUpdate {
+  pubkey: string;
+  profile: any;
+}
+
+export interface ProjectUpdate {
+  founderKey: string;
+  founderRecoveryKey: string;
+  projectIdentifier: string;
+  nostrPubKey: string;
+  startDate: number;
+  penaltyDays: number;
+  expiryDate: number;
+  targetAmount: number;
+  stages: [{ amountToRelease: number; releaseDate: number }];
+  projectSeeders: { threshold: number; secretHashes: string[] }[];
+}
+
+// Add new interface for Project Event
+interface ProjectEvent extends Event {
+  details?: {
+    nostrPubKey: string;
+    projectIdentifier: string;
+    // ...other details fields
+  };
+  metadata?: {
+    name?: string;
+    about?: string;
+    picture?: string;
+  };
+}
 
 @Injectable({
   providedIn: 'root',
 })
 export class RelayService {
   private pool = new SimplePool();
+  private ndk: NDK | null = null;
+  private isConnected = false;
   private relayUrls = [
     'wss://relay.primal.net',
     'wss://nos.lol',
@@ -15,8 +50,10 @@ export class RelayService {
   ];
 
   private connectedRelays = signal<string[]>([]);
-  public projects = signal<Event[]>([]);
+  public projects = signal<ProjectEvent[]>([]);
   public loading = signal<boolean>(false);
+  public profileUpdates = new Subject<ProfileUpdate>();
+  public projectUpdates = new Subject<ProjectUpdate>();
 
   constructor() {
     this.initializeRelays();
@@ -29,110 +66,163 @@ export class RelayService {
     });
   }
 
+  private async ensureConnected(): Promise<NDK> {
+    if (this.ndk && this.isConnected) {
+      return this.ndk;
+    }
+
+    if (!this.ndk) {
+      this.ndk = new NDK({
+        explicitRelayUrls: this.relayUrls,
+      });
+    }
+
+    try {
+      await this.ndk.connect();
+      this.isConnected = true;
+      return this.ndk;
+    } catch (error) {
+      console.error('Failed to connect to relays:', error);
+      throw error;
+    }
+  }
+
   private async initializeRelays() {
     this.loading.set(true);
 
-    const ndk = new NDK({
-      explicitRelayUrls: this.relayUrls,
-    });
-
-    await ndk.connect();
-
-    const sub = ndk.subscribe({ kinds: [1], '#t': ['nostr'] });
-    sub.on('event', async (event: NDKEvent) => {
-      const author = event.author;
-      const profile = await author.fetchProfile();
-      console.log(`${profile?.name}: ${event.content}`);
-    });
-
-    for (const url of this.relayUrls) {
-      try {
-        // const relay = await Relay.connect(url);
-        // const sub = relay.subscribe(
-        //   [
-        //     {
-        //       ids: [
-        //         'd7dd5eb3ab747e16f8d0212d53032ea2a7cadef53837e5a6c66d42849fcb9027',
-        //       ],
-        //     },
-        //   ],
-        //   {
-        //     onevent(event) {
-        //       console.log('we got the event we wanted:', event);
-        //     },
-        //     oneose() {
-        //       sub.close();
-        //     },
-        //   }
-        // );
-        // relay.on('connect', () => {
-        //   this.connectedRelays.update(relays => [...relays, url]);
-        // });
-        // relay.on('disconnect', () => {
-        //   this.connectedRelays.update(relays =>
-        //     relays.filter(r => r !== url)
-        //   );
-        // });
-      } catch (error) {
-        console.error(`Failed to connect to relay ${url}:`, error);
-      }
+    try {
+      await this.ensureConnected();
+    } catch (error) {
+      console.error('Failed to initialize relays:', error);
+    } finally {
+      this.loading.set(false);
     }
-
-    this.loading.set(false);
   }
 
-  async fetchProfile(pubkey: string): Promise<any> {
-    const ndk = new NDK({
-      explicitRelayUrls: this.relayUrls,
-    });
+  private batchArray<T>(array: T[], batchSize: number): T[][] {
+    const batches: T[][] = [];
+    for (let i = 0; i < array.length; i += batchSize) {
+      batches.push(array.slice(i, i + batchSize));
+    }
+    return batches;
+  }
 
-    await ndk.connect();
-
+  async fetchData(ids: string[]): Promise<void> {
     try {
-      const filter = {
-        kinds: [0],
-        authors: [pubkey],
-        limit: 1
-      };
+      const ndk = await this.ensureConnected();
+      // Split pubkeys into batches of 10
+      const batches = this.batchArray(ids, 1);
 
-      const sub = ndk.subscribe(filter);
-      
-      return new Promise((resolve) => {
+      for (const batch of batches) {
+        const filter = {
+          kinds: [30078],
+          ids: ids,
+        };
+
+        const sub = ndk.subscribe(filter);
+        console.log('Processing batch:', batch);
+
         const timeout = setTimeout(() => {
           // sub.close();
-          resolve(null);
-        }, 5000); // 5 second timeout
+        }, 5000);
 
         sub.on('event', (event: NDKEvent) => {
-          clearTimeout(timeout);
-          // sub.close();
+          console.log('EVENT', event.content);
           try {
-            resolve(JSON.parse(event.content));
-          } catch {
-            resolve(null);
+            const projectDetails = JSON.parse(event.content);
+            this.fetchProfile([projectDetails.nostrPubKey]);
+            this.projectUpdates.next(projectDetails);
+          } catch (error) {
+            console.error('Failed to parse profile:', error);
           }
         });
-      });
-    } finally {
-      // await ndk.close();
+
+        // Wait for each batch to complete
+        await new Promise((resolve) => {
+          sub.on('eose', () => {
+            clearTimeout(timeout);
+            // sub.close();
+            resolve(null);
+          });
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching profiles:', error);
+    }
+  }
+
+  async fetchProfile(pubkeys: string[]): Promise<void> {
+    try {
+      const ndk = await this.ensureConnected();
+      // Split pubkeys into batches of 10
+      const batches = this.batchArray(pubkeys, 1);
+
+      for (const batch of batches) {
+        const filter = {
+          kinds: [0],
+          authors: batch,
+          limit: 1,
+        };
+
+        const sub = ndk.subscribe(filter);
+        console.log('Processing batch:', batch);
+
+        const timeout = setTimeout(() => {
+          // sub.close();
+        }, 5000);
+
+        sub.on('event', (event: NDKEvent) => {
+          console.log('EVENT', event.content);
+          try {
+            const profile = JSON.parse(event.content);
+            const existingProjects = this.projects();
+            const projectToUpdate = existingProjects.find(p => 
+              p.details?.nostrPubKey === event.pubkey
+            ) as ProjectEvent | undefined;
+
+            if (projectToUpdate) {
+              const updatedProjects = existingProjects.map(p => 
+                (p as ProjectEvent).details?.nostrPubKey === event.pubkey 
+                  ? { ...p, metadata: profile }
+                  : p
+              );
+              this.projects.set(updatedProjects);
+            }
+
+            this.profileUpdates.next({
+              pubkey: event.pubkey,
+              profile
+            });
+          } catch (error) {
+            console.error('Failed to parse profile:', error);
+          }
+        });
+
+        // Wait for each batch to complete
+        await new Promise((resolve) => {
+          sub.on('eose', () => {
+            clearTimeout(timeout);
+            // sub.close();
+            resolve(null);
+          });
+        });
+      }
+    } catch (error) {
+      console.error('Error fetching profiles:', error);
     }
   }
 
   private subscribeToProjects() {
     // this.loading.set(true);
-
     // const filter: Filter = {
     //   kinds: [1],
     //   tags: [['t', 'project']],
     //   limit: 100,
     // };
-
     // let sub = this.pool.sub(this.relayUrls, [filter]);
-
     // sub.on('event', (event: Event) => {
     //   this.projects.update((projects) => [...projects, event]);
     // });
-
     // sub.on('eose', () => {
     //   this.loading.set(false);
     //   sub.unsub();
@@ -140,6 +230,10 @@ export class RelayService {
   }
 
   public disconnect() {
+    if (this.ndk) {
+      // this.ndk.close();
+      this.isConnected = false;
+    }
     this.pool.close(this.relayUrls);
   }
 }
