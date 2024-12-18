@@ -13,11 +13,12 @@ import { IndexerService } from '../../services/indexer.service';
 import { RouterLink } from '@angular/router';
 import { ExploreStateService } from '../../services/explore-state.service';
 import { Router } from '@angular/router';
+import { BreadcrumbComponent } from '../../components/breadcrumb.component';
 
 @Component({
   selector: 'app-explore',
   standalone: true,
-  imports: [RouterLink],
+  imports: [RouterLink, BreadcrumbComponent],
   styles: [`
     .fade-out {
       animation: fadeOut 0.3s ease-out forwards;
@@ -29,6 +30,11 @@ import { Router } from '@angular/router';
     }
   `],
   template: `
+    <app-breadcrumb [items]="[
+      { label: 'Home', url: '/' },
+      { label: 'Explore', url: '' }
+    ]"></app-breadcrumb>
+
     <section class="hero">
       <div class="hero-wrapper">
         <div class="hero-content">
