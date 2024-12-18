@@ -1,11 +1,11 @@
 import { Injectable, signal, effect } from '@angular/core';
 import { SimplePool, Filter, Event, Relay } from 'nostr-tools';
-import NDK, { NDKEvent } from '@nostr-dev-kit/ndk';
+import NDK, { NDKEvent, NDKUserProfile } from '@nostr-dev-kit/ndk';
 import { Subject } from 'rxjs';
 
 export interface ProfileUpdate {
   pubkey: string;
-  profile: any;
+  profile: NDKUserProfile;
 }
 
 export interface ProjectUpdate {
@@ -21,18 +21,14 @@ export interface ProjectUpdate {
   projectSeeders: { threshold: number; secretHashes: string[] }[];
 }
 
-// Add new interface for Project Event
+// Update ProjectEvent interface to use NDKUserProfile
 interface ProjectEvent extends Event {
   details?: {
     nostrPubKey: string;
     projectIdentifier: string;
     // ...other details fields
   };
-  metadata?: {
-    name?: string;
-    about?: string;
-    picture?: string;
-  };
+  metadata?: NDKUserProfile;
 }
 
 @Injectable({
@@ -154,8 +150,7 @@ export class RelayService {
   async fetchProfile(pubkeys: string[]): Promise<void> {
     try {
       const ndk = await this.ensureConnected();
-      // Split pubkeys into batches of 10
-      const batches = this.batchArray(pubkeys, 1);
+      const batches = this.batchArray(pubkeys, 20);
 
       for (const batch of batches) {
         const filter = {
@@ -172,37 +167,22 @@ export class RelayService {
         }, 5000);
 
         sub.on('event', (event: NDKEvent) => {
-          console.log('EVENT', event.content);
           try {
+            console.log('FETCHED PROFILE', event);
             const profile = JSON.parse(event.content);
-            const existingProjects = this.projects();
-            const projectToUpdate = existingProjects.find(p => 
-              p.details?.nostrPubKey === event.pubkey
-            ) as ProjectEvent | undefined;
-
-            if (projectToUpdate) {
-              const updatedProjects = existingProjects.map(p => 
-                (p as ProjectEvent).details?.nostrPubKey === event.pubkey 
-                  ? { ...p, metadata: profile }
-                  : p
-              );
-              this.projects.set(updatedProjects);
-            }
-
             this.profileUpdates.next({
               pubkey: event.pubkey,
-              profile
+              profile,
             });
           } catch (error) {
             console.error('Failed to parse profile:', error);
           }
         });
 
-        // Wait for each batch to complete
+        // Wait for batch completion
         await new Promise((resolve) => {
           sub.on('eose', () => {
             clearTimeout(timeout);
-            // sub.close();
             resolve(null);
           });
         });

@@ -1,5 +1,6 @@
 import { Injectable, signal, inject, effect } from '@angular/core';
-import { RelayService } from './relay.service';
+import { ProfileUpdate, ProjectUpdate, RelayService } from './relay.service';
+import { NDKUserProfile } from '@nostr-dev-kit/ndk';
 
 export interface IndexedProject {
   founderKey: string;
@@ -12,23 +13,8 @@ export interface IndexedProject {
     picture?: string;
     about?: string;
   };
-  details?: {
-    founderKey: string;
-    founderRecoveryKey: string;
-    projectIdentifier: string;
-    nostrPubKey: string;
-    startDate: number;
-    penaltyDays: number;
-    expiryDate: number;
-    targetAmount: number;
-    stages: { amountToRelease: number; releaseDate: number }[];
-    projectSeeders: { threshold: number; secretHashes: string[] }[];
-  };
-  metadata?: {
-    name?: string;
-    about?: string;
-    picture?: string;
-  };
+  details?: ProjectUpdate;
+  metadata?: NDKUserProfile;
 }
 
 export interface ProjectStats {

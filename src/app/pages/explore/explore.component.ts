@@ -22,37 +22,41 @@ import { CommonModule } from '@angular/common';
   standalone: true,
   imports: [RouterLink, BreadcrumbComponent, CommonModule],
   styles: [
-    `.truncate {
-      max-width: 150px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      display: inline-block;
-    }
-    .loading-profile {
-      font-style: italic;
-      color: #666;
-      margin-left: 0.5em;
-    }
-    .about {
-      margin-top: 0.5em;
-      font-style: italic;
-    }
-    .project-details {
-      margin-top: 1rem;
-      padding-top: 1rem;
-      border-top: 1px solid rgba(255,255,255,0.1);
-    }
-    .project-details p {
-      margin: 0.25rem 0;
-      font-size: 0.9rem;
-      color: var(--text-secondary);
-    }`
+    `
+      .truncate {
+        max-width: 150px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        display: inline-block;
+      }
+      .loading-profile {
+        font-style: italic;
+        color: #666;
+        margin-left: 0.5em;
+      }
+      .about {
+        margin-top: 0.5em;
+        font-style: italic;
+      }
+      .project-details {
+        margin-top: 1rem;
+        padding-top: 1rem;
+        border-top: 1px solid rgba(255, 255, 255, 0.1);
+      }
+      .project-details p {
+        margin: 0.25rem 0;
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+      }
+    `,
   ], // Remove fade-out animation styles
   template: `
-    <app-breadcrumb [items]="[
-      { label: 'Home', url: '/' },
-      { label: 'Explore', url: '' }
-    ]"></app-breadcrumb>
+    <app-breadcrumb
+      [items]="[
+        { label: 'Home', url: '/' },
+        { label: 'Explore', url: '' }
+      ]"
+    ></app-breadcrumb>
 
     <section class="hero">
       <div class="hero-wrapper">
@@ -85,27 +89,29 @@ import { CommonModule } from '@angular/common';
           <h3>{{ project.projectIdentifier }}</h3>
           <p>Created on block: {{ project.createdOnBlock }}</p>
           <p>
-            Founder: 
-            @if (project.metadata?.name) {
-              {{ project.metadata?.name }}
+            Founder: @if (project.metadata?.name) {
+            {{ project.metadata?.name }}
             } @else {
-              <span class="truncate">{{ project.founderKey }}</span>
-              <small class="loading-profile">Loading profile...</small>
+            <span class="truncate">{{ project.founderKey }}</span>
+            <small class="loading-profile">Loading profile...</small>
             }
           </p>
           @if (project.metadata?.about) {
-            <p class="about">{{ project.metadata?.about }}</p>
-          }
-          
+          <p class="about">{{ project.metadata?.about }}</p>
+          } META:
+          {{ project.metadata | json }}
+
           <!-- Add new project details -->
           @if (project.details) {
-            <div class="project-details">
-              <p>Stages: {{ project.details.stages.length }}</p>
-              <p>Start Date: {{ project.details.startDate | date }}</p>
-              <p>Expiry Date: {{ project.details.expiryDate | date }}</p>
-              <p>Penalty Days: {{ project.details.penaltyDays }}</p>
-              <p>Target Amount: {{ project.details.targetAmount / 100000000 }} BTC</p>
-            </div>
+          <div class="project-details">
+            <p>Stages: {{ project.details.stages.length }}</p>
+            <p>Start Date: {{ project.details.startDate | date }}</p>
+            <p>Expiry Date: {{ project.details.expiryDate | date }}</p>
+            <p>Penalty Days: {{ project.details.penaltyDays }}</p>
+            <p>
+              Target Amount: {{ project.details.targetAmount / 100000000 }} BTC
+            </p>
+          </div>
           }
         </a>
         }
@@ -136,6 +142,7 @@ export class ExploreComponent implements OnInit, AfterViewInit, OnDestroy {
   private loadingTimeout: any = null;
   private exploreState = inject(ExploreStateService);
   private router = inject(Router);
+  private relay = inject(RelayService);
 
   indexer = inject(IndexerService);
 
@@ -146,6 +153,67 @@ export class ExploreComponent implements OnInit, AfterViewInit, OnDestroy {
       // Handle any side effects when projects update
       console.log('Projects updated:', projects.length);
     });
+
+    // Listen for profile updates
+    this.relay.profileUpdates.subscribe((update) => {
+      const id = update.pubkey;
+      console.log('UPDATE!!!', update);
+
+      console.log(JSON.stringify(this.indexer.projects()));
+
+      // Find the project from this.indexer.projects() that has the ID.
+      const project = this.indexer
+        .projects()
+        .find((p) => p.details?.nostrPubKey === id);
+
+      console.log('Found project: ', project);
+      console.log('Project details:', update);
+
+      if (project) {
+        project.metadata = update.profile;
+      }
+
+      // Update the matching project with new profile data
+      this.indexer.projects.update((projects) =>
+        projects.map((project) =>
+          project.founderKey === update.pubkey
+            ? { ...project, metadata: update.profile }
+            : project
+        )
+      );
+    });
+
+    // Listen for profile updates
+    this.relay.projectUpdates.subscribe((update) => {
+      const id = update.projectIdentifier;
+
+      // Find the project from this.indexer.projects() that has the ID.
+      const project = this.indexer
+        .projects()
+        .find((p) => p.projectIdentifier === id);
+
+      console.log('Found project: ', project);
+      console.log('Project details:', update);
+
+      if (project) {
+        project.details = update;
+      }
+
+      // if (project) {
+      //   // Update project with latest data
+      //   this.indexer.projects.update(projects =>
+      //     projects.map(p => p.projectIdentifier === id ? { ...p, metadata: update } : p)
+      //   );
+      // }
+
+      // console.log('Project update:', update);
+      // Update the matching project with new profile data
+      // this.indexer.projects.update((projects) =>
+      //   projects.map((project) => {
+      //     console.log(project);
+      //   })
+      // );
+    });
   }
 
   async ngOnInit() {
@@ -154,7 +222,7 @@ export class ExploreComponent implements OnInit, AfterViewInit, OnDestroy {
     // Always check if we actually have projects loaded
     if (this.exploreState.hasState && this.indexer.projects().length > 0) {
       this.indexer.restoreOffset(this.exploreState.offset);
-      
+
       queueMicrotask(() => {
         window.scrollTo({
           top: this.exploreState.lastScrollPosition,
@@ -194,7 +262,7 @@ export class ExploreComponent implements OnInit, AfterViewInit, OnDestroy {
     }
     // Optionally clear state when navigating away
     // this.exploreState.clearState();
-    
+
     // Don't clear state on normal navigation
     // but do clear if we have no projects
     if (this.indexer.projects().length === 0) {
