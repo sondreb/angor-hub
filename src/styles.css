@@ -187,6 +187,10 @@ footer {
   overflow: hidden;
   animation: fadeSlideIn 0.5s ease-out backwards;
   backface-visibility: hidden; /* Prevents flickering */
+  cursor: pointer;
+  text-decoration: none;
+  display: block;
+  color: inherit;
 }
 
 /* Stagger the animation delay for each card */
@@ -199,7 +203,7 @@ footer {
 
 .project-card:hover {
   transform: translateY(-4px) scale(1.02);
-  box-shadow: 0 8px 16px rgba(8, 108, 129, 0.15);
+  box-shadow: 0 8px 16px rgba(8, 108, 129, 0.2);
   transition: all 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
 }
 

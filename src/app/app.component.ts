@@ -15,7 +15,7 @@ import { ThemeService } from './services/theme.service';
         </a>
         <div class="nav-links">
           <a routerLink="/explore">Explore</a>
-          <a routerLink="/project">Projects</a>
+          <!-- <a routerLink="/project">Projects</a> -->
           <button (click)="toggleTheme()" class="theme-toggle">
             {{ (themeService.theme$ | async) === 'light' ? '☀️' : '🌙' }}
           </button>

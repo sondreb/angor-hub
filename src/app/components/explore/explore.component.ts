@@ -1,10 +1,12 @@
 import { Component, inject, ElementRef, ViewChild, AfterViewInit, OnDestroy } from '@angular/core';
 import { RelayService } from '../../services/relay.service';
 import { IndexerService } from '../../services/indexer.service';
+import { RouterLink } from '@angular/router';
 
 @Component({
   selector: 'app-explore',
   standalone: true,
+  imports: [RouterLink],
   template: `
     <section class="hero">
       <div class="hero-wrapper">
@@ -28,11 +30,13 @@ import { IndexerService } from '../../services/indexer.service';
       } @else {
         <section class="projects">
           @for (project of indexer.projects(); track project.projectIdentifier; let i = $index) {
-            <div class="project-card" [attr.data-index]="i">
+            <a [routerLink]="['/project', project.projectIdentifier]" 
+               class="project-card" 
+               [attr.data-index]="i">
               <h3>{{project.projectIdentifier}}</h3>
               <p>Created on block: {{project.createdOnBlock}}</p>
               <p>Founder: {{project.founderKey}}</p>
-            </div>
+            </a>
           }
         </section>
 
