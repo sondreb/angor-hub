@@ -19,16 +19,7 @@ import { BreadcrumbComponent } from '../../components/breadcrumb.component';
   selector: 'app-explore',
   standalone: true,
   imports: [RouterLink, BreadcrumbComponent],
-  styles: [`
-    .fade-out {
-      animation: fadeOut 0.3s ease-out forwards;
-    }
-    
-    @keyframes fadeOut {
-      from { opacity: 1; }
-      to { opacity: 0; }
-    }
-  `],
+  styles: [], // Remove fade-out animation styles
   template: `
     <app-breadcrumb [items]="[
       { label: 'Home', url: '/' },
@@ -59,7 +50,7 @@ import { BreadcrumbComponent } from '../../components/breadcrumb.component';
         @for (project of indexer.projects(); track project.projectIdentifier;
         let i = $index) {
         <a
-          (click)="navigateToProject($event, project.projectIdentifier)"
+          [routerLink]="['/project', project.projectIdentifier]"
           class="project-card"
           [attr.data-index]="i"
         >
@@ -235,19 +226,5 @@ export class ExploreComponent implements OnInit, AfterViewInit, OnDestroy {
         this.indexer.projects().length
       );
     }
-  }
-
-  async navigateToProject(event: Event, projectId: string) {
-    event.preventDefault();
-    
-    // Add fade-out class to container
-    const container = document.querySelector('.container');
-    container?.classList.add('fade-out');
-
-    // Wait for animation to complete
-    await new Promise(resolve => setTimeout(resolve, 300));
-
-    // Navigate to project
-    this.router.navigate(['/project', projectId]);
   }
 }
