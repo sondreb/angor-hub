@@ -1,4 +1,13 @@
-import { Component, inject, ElementRef, ViewChild, AfterViewInit, OnDestroy, OnInit, HostListener } from '@angular/core';
+import {
+  Component,
+  inject,
+  ElementRef,
+  ViewChild,
+  AfterViewInit,
+  OnDestroy,
+  OnInit,
+  HostListener,
+} from '@angular/core';
 import { RelayService } from '../../services/relay.service';
 import { IndexerService } from '../../services/indexer.service';
 import { RouterLink } from '@angular/router';
@@ -23,41 +32,42 @@ import { ExploreStateService } from '../../services/explore-state.service';
 
     <div class="container">
       @if (indexer.loading() && !indexer.projects().length) {
-        <div class="loading-spinner">
-          <div class="spinner"></div>
-        </div>
+      <div class="loading-spinner">
+        <div class="spinner"></div>
+      </div>
       } @else if (indexer.projects().length === 0) {
-        <p class="text-center">No projects found.</p>
+      <p class="text-center">No projects found.</p>
       } @else {
-        <section class="projects">
-          @for (project of indexer.projects(); track project.projectIdentifier; let i = $index) {
-            <a [routerLink]="['/project', project.projectIdentifier]" 
-               class="project-card" 
-               [attr.data-index]="i">
-              <h3>{{project.projectIdentifier}}</h3>
-              <p>Created on block: {{project.createdOnBlock}}</p>
-              <p>Founder: {{project.founderKey}}</p>
-            </a>
-          }
-        </section>
-
-        @if (!indexer.isComplete()) {
-          @if (indexer.loading()) {
-            <div class="loading-spinner">
-              <div class="spinner"></div>
-            </div>
-          } @else {
-            <div class="load-more">
-              <button class="primary-button" (click)="loadMore()">
-                Load More Projects
-              </button>
-            </div>
-          }
-
-          <!-- Move trigger after the button -->
-          <div #scrollTrigger class="scroll-trigger"></div>
+      <section class="projects">
+        @for (project of indexer.projects(); track project.projectIdentifier;
+        let i = $index) {
+        <a
+          [routerLink]="['/project', project.projectIdentifier]"
+          class="project-card"
+          [attr.data-index]="i"
+        >
+          <h3>{{ project.projectIdentifier }}</h3>
+          <p>Created on block: {{ project.createdOnBlock }}</p>
+          <p>Founder: {{ project.founderKey }}</p>
+        </a>
         }
+      </section>
+
+      @if (!indexer.isComplete()) { @if (indexer.loading()) {
+      <div class="loading-spinner">
+        <div class="spinner"></div>
+      </div>
+      } @else {
+      <div class="load-more">
+        <button class="primary-button" (click)="loadMore()">
+          Load More Projects
+        </button>
+      </div>
       }
+
+      <!-- Move trigger after the button -->
+      <div #scrollTrigger class="scroll-trigger"></div>
+      } }
     </div>
   `,
 })
@@ -77,15 +87,18 @@ export class ExploreComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.exploreState.hasState) {
       // Restore the offset in the indexer service
       this.indexer.restoreOffset(this.exploreState.offset);
-      
-      // Then restore the data
-      await this.indexer.fetchProjects();
+
+      // Restore scroll position immediately
+      // window.scrollTo({
+      //   top: this.exploreState.lastScrollPosition,
+      //   behavior: 'instant'
+      // });
 
       // After data is loaded, restore scroll position
       queueMicrotask(() => {
         window.scrollTo({
           top: this.exploreState.lastScrollPosition,
-          behavior: 'instant'
+          behavior: 'instant',
         });
       });
     } else {
@@ -97,7 +110,10 @@ export class ExploreComponent implements OnInit, AfterViewInit, OnDestroy {
   @HostListener('window:scroll', ['$event'])
   onScroll() {
     // Save both scroll position and current offset
-    this.exploreState.saveState(window.scrollY, this.indexer.getCurrentOffset());
+    this.exploreState.saveState(
+      window.scrollY,
+      this.indexer.getCurrentOffset()
+    );
   }
 
   ngAfterViewInit() {
@@ -121,7 +137,7 @@ export class ExploreComponent implements OnInit, AfterViewInit, OnDestroy {
 
   private watchForScrollTrigger() {
     console.log('Setting up mutation observer');
-    
+
     this.mutationObserver = new MutationObserver(() => {
       const triggerElement = document.querySelector('.scroll-trigger');
       if (triggerElement) {
@@ -133,13 +149,13 @@ export class ExploreComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.mutationObserver.observe(document.body, {
       childList: true,
-      subtree: true
+      subtree: true,
     });
   }
 
   private setupIntersectionObserver() {
     console.log('Setting up intersection observer');
-    
+
     if (!this.scrollTrigger) {
       console.warn('ViewChild scroll trigger not initialized');
       return;
@@ -148,7 +164,7 @@ export class ExploreComponent implements OnInit, AfterViewInit, OnDestroy {
     const options = {
       root: null,
       rootMargin: '100px',
-      threshold: 0.1
+      threshold: 0.1,
     };
     console.log('Observer options:', options);
 
@@ -158,13 +174,13 @@ export class ExploreComponent implements OnInit, AfterViewInit, OnDestroy {
     }
 
     this.observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
+      entries.forEach((entry) => {
         console.log('Intersection entry:', {
           isIntersecting: entry.isIntersecting,
           intersectionRatio: entry.intersectionRatio,
           boundingClientRect: entry.boundingClientRect,
           isLoading: this.indexer.loading(),
-          isComplete: this.indexer.isComplete()
+          isComplete: this.indexer.isComplete(),
         });
 
         if (entry.isIntersecting) {
@@ -191,13 +207,16 @@ export class ExploreComponent implements OnInit, AfterViewInit, OnDestroy {
     console.log('LoadMore called:', {
       isLoading: this.indexer.loading(),
       isComplete: this.indexer.isComplete(),
-      currentProjectCount: this.indexer.projects().length
+      currentProjectCount: this.indexer.projects().length,
     });
 
     if (!this.indexer.loading() && !this.indexer.isComplete()) {
       console.log('Executing load more');
       await this.indexer.loadMore();
-      console.log('Load more completed, new project count:', this.indexer.projects().length);
+      console.log(
+        'Load more completed, new project count:',
+        this.indexer.projects().length
+      );
     }
   }
 }
