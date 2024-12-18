@@ -18,11 +18,12 @@ import { BreadcrumbComponent } from '../../components/breadcrumb.component';
 import { CommonModule } from '@angular/common';
 import { Location } from '@angular/common';
 import { filter } from 'rxjs/operators';
+import { AgoPipe } from '../../pipes/ato.pipe';
 
 @Component({
   selector: 'app-explore',
   standalone: true,
-  imports: [RouterLink, BreadcrumbComponent, CommonModule],
+  imports: [RouterLink, BreadcrumbComponent, CommonModule, AgoPipe],
   styles: [
     `
       .truncate {
@@ -250,9 +251,9 @@ import { filter } from 'rxjs/operators';
                 </div>
               </div> -->
               <div class="info-item">
-                <div class="info-label">Start Date</div>
+                <div class="info-label">Starts in</div>
                 <div class="info-value">
-                  {{ project.details.startDate * 1000 | date : 'mediumDate' }}
+                  {{ project.details.startDate | ago }}
                 </div>
               </div>
               <!-- <div class="info-item">
@@ -272,8 +273,6 @@ import { filter } from 'rxjs/operators';
                   {{ project.stats?.investorCount }}
                 </div>
               </div>
-
-              
 
             </div>
             <div class="funding-progress">
@@ -380,6 +379,9 @@ export class ExploreComponent implements OnInit, AfterViewInit, OnDestroy {
       if (project) {
         project.details = update;
       }
+
+
+
 
       // if (project) {
       //   // Update project with latest data
