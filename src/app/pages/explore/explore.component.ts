@@ -235,7 +235,7 @@ export class ExploreComponent implements OnInit, AfterViewInit, OnDestroy {
     effect(() => {
       const projects = this.indexer.projects();
       // Handle any side effects when projects update
-      console.log('Projects updated:', projects.length);
+      // console.log('Projects updated:', projects.length);
     });
 
     // Listen for profile updates

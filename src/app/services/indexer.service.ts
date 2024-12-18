@@ -70,7 +70,7 @@ export interface NetworkStats {
 export class IndexerService {
   private readonly LIMIT = 6;
   private readonly indexerUrl = 'https://tbtc.indexer.angor.io/';
-  private offset = -1;  // Change back to simple number
+  private offset = -1000; // Change back to simple number
   private totalItems = 0;
   private totalProjectsFetched = false;
   private relay = inject(RelayService);
@@ -91,14 +91,16 @@ export class IndexerService {
     });
   }
 
-  private async fetchJson<T>(url: string): Promise<{ data: T; headers: Headers }> {
+  private async fetchJson<T>(
+    url: string
+  ): Promise<{ data: T; headers: Headers }> {
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     return {
       data: await response.json(),
-      headers: response.headers
+      headers: response.headers,
     };
   }
 
@@ -113,9 +115,7 @@ export class IndexerService {
   private updateProjectMetadata(pubkey: string, metadata: any) {
     this.projects.update((projects) =>
       projects.map((project) =>
-        project.founderKey === pubkey
-          ? { ...project, metadata }
-          : project
+        project.founderKey === pubkey ? { ...project, metadata } : project
       )
     );
   }
@@ -131,49 +131,108 @@ export class IndexerService {
   }
 
   async fetchProjects(reset = false): Promise<void> {
+    console.log('FETCH PROJECTS');
+
     if (reset) {
-      this.offset = -1;
+      this.offset = -1000;
       this.totalProjectsFetched = false;
       this.totalItems = 0;
       this.projects.set([]);
     }
 
-    if (this.loading() || this.totalProjectsFetched) {
+    if (this.loading()) {
       return;
     }
 
     try {
       this.loading.set(true);
       this.error.set(null);
+      let limit = this.LIMIT;
+
+      // If the next offset is negative, substract that from the limit.
+      if (this.offset !== -1000 && this.offset < 0) {
+        // If offset is -1, this would result in 5.
+        limit = this.LIMIT + this.offset;
+        console.log('LIMIT SUBSTRACTED:', limit);
+
+        // Also reset the offset to 0 to get last page.
+        this.offset = 0;
+
+        this.totalProjectsFetched = true;
+      }
+
+      // if (this.offset !== -1) {
+      //   // For the last page, we need to make sure we don't fetch more than the offset.
+      //   if (this.offset < limit) {
+      //     console.log('OFFSET LOWER THAN LIMIT!!', this.offset, limit);
+      //     limit = this.offset;
+      //   }
+      // }
 
       const params = new URLSearchParams();
-      params.append('limit', this.LIMIT.toString());
-      if (this.offset >= 0) {
+      params.append('limit', limit.toString());
+
+      if (this.offset > -1000) {
         params.append('offset', this.offset.toString());
       }
-      
-      const url = `${this.indexerUrl}api/query/Angor/projects?${params.toString()}`;
+
+      const url = `${
+        this.indexerUrl
+      }api/query/Angor/projects?${params.toString()}`;
       console.log('Fetching:', url);
 
-      const { data: response, headers } = await this.fetchJson<IndexedProject[]>(url);
-      
-      if (Array.isArray(response) && response.length > 0) {
-        if (this.offset === -1) {
-          // First fetch, we must double the offset because we 
-          // already retrieved the latest page.
+      const { data: response, headers } = await this.fetchJson<
+        IndexedProject[]
+      >(url);
 
+      if (Array.isArray(response) && response.length > 0) {
+        console.log('Offset:', this.offset);
+
+        if (this.offset === -1000) {
           this.totalItems = parseInt(headers.get('pagination-total') || '0');
           // Calculate the starting offset from the end
-          this.offset = Math.max(0, this.totalItems - this.LIMIT - this.LIMIT);
+          this.offset = Math.max(0, this.totalItems - limit - limit);
         } else {
           // Move backwards for next fetch
-          this.offset = Math.max(0, this.offset - this.LIMIT);
-          this.totalProjectsFetched = this.offset === 0;
+          const nextOffset = this.offset - this.LIMIT;
+          // this.offset = Math.max(0, nextOffset);
+          this.offset = nextOffset;
+
+          console.log('Next offset:', nextOffset);
+          console.log('Current offset:', this.offset);
+
+          // If the next offset is negative, substract that from the limit.
+          if (nextOffset < 0) {
+          }
+
+          // Happens on the last page. We've reached the end.
+          // if (response.length < limit) {
+          //   console.log('LIMIT REACHED!', response.length, limit);
+          //   this.totalProjectsFetched = true;
+          // }
+
+          // if (this.offset < 0) {
+          //   this.offset = 0;
+          // }
+
+          // Make the offset go negative
+          // if (this.offset < this.LIMIT - this.LIMIT) {
+          //   this.totalProjectsFetched = true;
+          // }
+
+          // Check if this was the last page we needed to load
+          // We've reached the end when we've loaded all items from 0 to totalItems
+          // const currentPosition = this.offset;
+          // if (currentPosition === 0) {
+          //   this.totalProjectsFetched = true;
+          //   console.log('Total projects fetched:', this.totalProjectsFetched);
+          // }
         }
 
-        this.projects.update(existing => [...existing, ...response]);
+        this.projects.update((existing) => [...existing, ...response]);
 
         const eventIds = response.map((project) => project.nostrEventId);
+
         if (eventIds.length > 0) {
           this.relay.fetchData(eventIds);
         }
@@ -190,19 +249,29 @@ export class IndexerService {
   }
 
   async getProjects() {
+    console.log('GET PROJECTS:');
+
     try {
       // Initial request to get total count
-      const response = await fetch(`${this.indexerUrl}api/query/Angor/projects`);
-      const total = parseInt(response.headers.get('pagination-total') || '0', 10);
-      
+      const response = await fetch(
+        `${this.indexerUrl}api/query/Angor/projects`
+      );
+      const total = parseInt(
+        response.headers.get('pagination-total') || '0',
+        this.LIMIT
+      );
+
       let currentOffset = 0;
       const allProjects: IndexedProject[] = [];
-      
+
       // Continue fetching while there are more items
       while (currentOffset < total) {
-        const batch = await this.fetchProjectsBatch(currentOffset, this.pageSize);
+        const batch = await this.fetchProjectsBatch(
+          currentOffset,
+          this.pageSize
+        );
         if (!batch || batch.length === 0) break;
-        
+
         allProjects.push(...batch);
         currentOffset += this.pageSize;
       }
@@ -216,6 +285,15 @@ export class IndexerService {
   }
 
   private async fetchProjectsBatch(offset: number, limit: number) {
+    console.log('fetchProjectsBatch');
+    // If the offset is lower than limit, it means we have reached the last page.
+    // At this time, we MUST make sure to not get more than the offset as limit, or
+    // there will be duplicate entries.
+    if (offset < limit) {
+      console.log('LIMIT HIGHER THAN OFFSET!!', offset, limit);
+      limit = offset;
+    }
+
     const url = `${this.indexerUrl}api/query/Angor/projects?offset=${offset}&limit=${limit}`;
     const response = await fetch(url);
     if (!response.ok) {
