@@ -106,7 +106,7 @@ footer {
 
 /* Hero Styles */
 .hero {
-  padding: 1.5rem 1rem;
+  padding: 0 1.5rem 1rem 1.5rem ;
   background: linear-gradient(to bottom, var(--header-bg), var(--background));
   border-bottom: 1px solid var(--border);
   text-align: center;
@@ -115,7 +115,7 @@ footer {
 
 .hero-wrapper {
   max-width: 800px;
-  margin: 0 auto;
+  margin: 1em auto;
 }
 
 .hero-content {
@@ -542,14 +542,6 @@ footer {
 .featured .post-image {
   height: 250px;
   min-width: 100%;
-}
-
-.home-hero {
-  min-height: 60vh;
-  display: flex;
-  align-items: center;
-  background: linear-gradient(135deg, var(--header-bg), var(--background));
-  text-align: center;
 }
 
 .hero-content {

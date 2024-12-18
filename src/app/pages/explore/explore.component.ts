@@ -155,6 +155,15 @@ import { filter } from 'rxjs/operators';
     `,
   ], // Remove fade-out animation styles
   template: `
+    <!-- <app-breadcrumb
+      [items]="[
+        { label: 'Home', url: '/' },
+        { label: 'Explore', url: '' }
+      ]"
+    ></app-breadcrumb> -->
+
+    <section class="hero">
+
     <app-breadcrumb
       [items]="[
         { label: 'Home', url: '/' },
@@ -162,7 +171,6 @@ import { filter } from 'rxjs/operators';
       ]"
     ></app-breadcrumb>
 
-    <section class="hero">
       <div class="hero-wrapper">
         <div class="hero-content">
           <strong>Explore Projects</strong>
@@ -572,7 +580,6 @@ export class ExploreComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private async loadProjectStats(project: any) {
-    console.log('LOAD PROJECT STATUS:', project);
     try {
       project.stats = await this.indexer.fetchProjectStats(
         project.projectIdentifier

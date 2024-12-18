@@ -13,13 +13,14 @@ import { BreadcrumbComponent } from '../../components/breadcrumb.component';
   standalone: true,
   imports: [CommonModule, BreadcrumbComponent],
   template: `
+    <section class="hero">
+
     <app-breadcrumb [items]="[
       { label: 'Home', url: '/' },
       { label: 'Explore', url: '/explore' },
       { label: projectId, url: '' }
     ]"></app-breadcrumb>
 
-    <section class="hero">
       <div class="hero-wrapper">
         <div class="hero-content">
           @if (project()) {
