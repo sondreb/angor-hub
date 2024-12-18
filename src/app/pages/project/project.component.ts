@@ -120,6 +120,9 @@ export class ProjectComponent implements OnInit, OnDestroy {
   loadingStats = false;
 
   async ngOnInit() {
+    // Scroll to top when component initializes
+    window.scrollTo(0, 0);
+
     const id = this.route.snapshot.paramMap.get('id');
     if (!id) {
       this.router.navigate(['/']);
