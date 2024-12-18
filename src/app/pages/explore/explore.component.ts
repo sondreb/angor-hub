@@ -183,7 +183,7 @@ import { filter } from 'rxjs/operators';
               <div class="info-item">
                 <div class="info-label">Start Date</div>
                 <div class="info-value">
-                  {{ project.details.startDate * 1000 | date : 'shortDate' }}
+                  {{ project.details.startDate * 1000 | date : 'mediumDate' }}
                 </div>
               </div>
               <div class="info-item">
@@ -193,7 +193,7 @@ import { filter } from 'rxjs/operators';
               <div class="info-item">
                 <div class="info-label">Expiry Date</div>
                 <div class="info-value">
-                  {{ project.details.expiryDate * 1000 | date : 'shortDate' }}
+                  {{ project.details.expiryDate * 1000 | date : 'mediumDate' }}
                 </div>
               </div>
             </div>
