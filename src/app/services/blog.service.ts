@@ -6,6 +6,7 @@ export interface BlogPost {
   pubDate: Date;
   description: string;
   thumbnail?: string;
+  image?: string;
 }
 
 @Injectable({
@@ -25,14 +26,13 @@ export class BlogService {
     
     return Array.from(items).slice(0, 4).map(item => {
       const description = item.querySelector('description')?.textContent || '';
-      const thumbnail = description.match(/<img[^>]+src="([^">]+)"/)?.[1];
       
       return {
         title: item.querySelector('title')?.textContent || '',
         link: item.querySelector('link')?.textContent || '',
         pubDate: new Date(item.querySelector('pubDate')?.textContent || ''),
         description: description.replace(/<[^>]*>/g, '').slice(0, 150) + '...',
-        thumbnail
+        image: item.querySelector('image')?.textContent || ''
       };
     });
   }

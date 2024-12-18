@@ -61,7 +61,7 @@ import { DatePipe } from '@angular/common';
         @if (blogPosts.length > 0) {
           <div class="blog-grid">
             <a [href]="blogPosts[0].link" class="blog-post featured" target="_blank">
-              <div class="post-image" [style.background-image]="'url(' + (blogPosts[0].thumbnail || '/assets/images/default-blog.jpg') + ')'">
+              <div class="post-image" [style.background-image]="'url(' + (blogPosts[0].image || '/assets/images/default-blog.jpg') + ')'">
               </div>
               <div class="post-content">
                 <h3>{{blogPosts[0].title}}</h3>
@@ -73,7 +73,7 @@ import { DatePipe } from '@angular/common';
             <div class="blog-posts-secondary">
               @for (post of blogPosts.slice(1); track post.link) {
                 <a [href]="post.link" class="blog-post" target="_blank">
-                  <div class="post-image" [style.background-image]="'url(' + (post.thumbnail || '/assets/images/default-blog.jpg') + ')'">
+                  <div class="post-image" [style.background-image]="'url(' + (post.image || '/assets/images/default-blog.jpg') + ')'">
                   </div>
                   <div class="post-content">
                     <h4>{{post.title}}</h4>
