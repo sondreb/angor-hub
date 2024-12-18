@@ -25,22 +25,34 @@ interface BreadcrumbItem {
         .breadcrumb {
             display: flex;
             flex-wrap: wrap;
-            padding: 0.75rem 1rem;
+            padding: 0.75rem 0;
             margin-bottom: 1rem;
             list-style: none;
-            background-color: #f8f9fa;
             border-radius: 0.25rem;
+            color: var(--text);
+            opacity: 0.8;
         }
+
         .breadcrumb-item + .breadcrumb-item::before {
             content: "/";
             padding: 0 0.5rem;
+            color: var(--text);
+            opacity: 0.5;
         }
+
         .breadcrumb-item a {
             text-decoration: none;
-            color: #007bff;
+            color: var(--accent);
         }
+
         .breadcrumb-item a:hover {
-            text-decoration: underline;
+            color: var(--accent-light);
+            text-decoration: none;
+        }
+
+        .breadcrumb-item:last-child {
+            color: var(--text);
+            opacity: 0.6;
         }
     `]
 })
