@@ -12,11 +12,22 @@ import { RelayService } from '../../services/relay.service';
 import { IndexerService } from '../../services/indexer.service';
 import { RouterLink } from '@angular/router';
 import { ExploreStateService } from '../../services/explore-state.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-explore',
   standalone: true,
   imports: [RouterLink],
+  styles: [`
+    .fade-out {
+      animation: fadeOut 0.3s ease-out forwards;
+    }
+    
+    @keyframes fadeOut {
+      from { opacity: 1; }
+      to { opacity: 0; }
+    }
+  `],
   template: `
     <section class="hero">
       <div class="hero-wrapper">
@@ -42,7 +53,7 @@ import { ExploreStateService } from '../../services/explore-state.service';
         @for (project of indexer.projects(); track project.projectIdentifier;
         let i = $index) {
         <a
-          [routerLink]="['/project', project.projectIdentifier]"
+          (click)="navigateToProject($event, project.projectIdentifier)"
           class="project-card"
           [attr.data-index]="i"
         >
@@ -77,24 +88,17 @@ export class ExploreComponent implements OnInit, AfterViewInit, OnDestroy {
   private mutationObserver: MutationObserver | null = null;
   private loadingTimeout: any = null;
   private exploreState = inject(ExploreStateService);
+  private router = inject(Router);
 
   indexer = inject(IndexerService);
 
   async ngOnInit() {
-    // Initialize the observer first
     this.watchForScrollTrigger();
 
-    if (this.exploreState.hasState) {
-      // Restore the offset in the indexer service
+    // Always check if we actually have projects loaded
+    if (this.exploreState.hasState && this.indexer.projects().length > 0) {
       this.indexer.restoreOffset(this.exploreState.offset);
-
-      // Restore scroll position immediately
-      // window.scrollTo({
-      //   top: this.exploreState.lastScrollPosition,
-      //   behavior: 'instant'
-      // });
-
-      // After data is loaded, restore scroll position
+      
       queueMicrotask(() => {
         window.scrollTo({
           top: this.exploreState.lastScrollPosition,
@@ -102,7 +106,8 @@ export class ExploreComponent implements OnInit, AfterViewInit, OnDestroy {
         });
       });
     } else {
-      // Fresh load
+      // Either no state or no projects loaded - start fresh
+      this.exploreState.clearState();
       await this.indexer.fetchProjects();
     }
   }
@@ -133,6 +138,12 @@ export class ExploreComponent implements OnInit, AfterViewInit, OnDestroy {
     }
     // Optionally clear state when navigating away
     // this.exploreState.clearState();
+    
+    // Don't clear state on normal navigation
+    // but do clear if we have no projects
+    if (this.indexer.projects().length === 0) {
+      this.exploreState.clearState();
+    }
   }
 
   private watchForScrollTrigger() {
@@ -218,5 +229,19 @@ export class ExploreComponent implements OnInit, AfterViewInit, OnDestroy {
         this.indexer.projects().length
       );
     }
+  }
+
+  async navigateToProject(event: Event, projectId: string) {
+    event.preventDefault();
+    
+    // Add fade-out class to container
+    const container = document.querySelector('.container');
+    container?.classList.add('fade-out');
+
+    // Wait for animation to complete
+    await new Promise(resolve => setTimeout(resolve, 300));
+
+    // Navigate to project
+    this.router.navigate(['/project', projectId]);
   }
 }
