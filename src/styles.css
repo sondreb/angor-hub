@@ -129,10 +129,14 @@ footer {
   font-weight: 800;
   margin: 0.25rem 0;
   letter-spacing: -0.5px;
+  line-height: 1.2;
+}
+
+/* Only apply gradient to hero titles on home/explore pages */
+.hero:not(.project-hero) h1 {
   background: linear-gradient(45deg, var(--text), var(--accent));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
-  line-height: 1.2;
 }
 
 .hero-subtitle {
@@ -294,4 +298,13 @@ footer {
 
 .load-more button {
   min-width: 200px;
+}
+
+.project-title {
+  font-size: 2rem;
+  font-weight: 800;
+  margin: 0.25rem 0;
+  letter-spacing: -0.5px;
+  line-height: 1.2;
+  color: var(--text);
 }
