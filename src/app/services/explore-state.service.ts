@@ -6,7 +6,7 @@ import { Injectable } from '@angular/core';
 export class ExploreStateService {
   private scrollPosition = 0;
   private projectsLoaded = false;
-  private currentOffset = 0;
+  private currentOffset : number = 0;
 
   saveState(scrollPosition: number, offset: number) {
     this.scrollPosition = scrollPosition;

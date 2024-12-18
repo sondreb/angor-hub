@@ -116,14 +116,11 @@ export class RelayService {
         };
 
         const sub = ndk.subscribe(filter);
-        console.log('Processing batch:', batch);
-
         const timeout = setTimeout(() => {
           // sub.close();
         }, 5000);
 
         sub.on('event', (event: NDKEvent) => {
-          console.log('EVENT', event.content);
           try {
             const projectDetails = JSON.parse(event.content);
             this.fetchProfile([projectDetails.nostrPubKey]);
@@ -160,7 +157,6 @@ export class RelayService {
         };
 
         const sub = ndk.subscribe(filter);
-        console.log('Processing batch:', batch);
 
         const timeout = setTimeout(() => {
           // sub.close();
@@ -168,7 +164,6 @@ export class RelayService {
 
         sub.on('event', (event: NDKEvent) => {
           try {
-            console.log('FETCHED PROFILE', event);
             const profile = JSON.parse(event.content);
             this.profileUpdates.next({
               pubkey: event.pubkey,

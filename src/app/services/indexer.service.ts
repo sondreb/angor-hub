@@ -70,9 +70,11 @@ export interface NetworkStats {
 export class IndexerService {
   private readonly LIMIT = 6;
   private readonly indexerUrl = 'https://tbtc.indexer.angor.io/';
-  private offset = 0;
+  private offset = -1;  // Change back to simple number
+  private totalItems = 0;
   private totalProjectsFetched = false;
   private relay = inject(RelayService);
+  private readonly pageSize = 100;
 
   public loading = signal<boolean>(false);
   public projects = signal<IndexedProject[]>([]);
@@ -89,12 +91,15 @@ export class IndexerService {
     });
   }
 
-  private async fetchJson<T>(url: string): Promise<T> {
+  private async fetchJson<T>(url: string): Promise<{ data: T; headers: Headers }> {
     const response = await fetch(url);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    return response.json();
+    return {
+      data: await response.json(),
+      headers: response.headers
+    };
   }
 
   private updateProjectProfile(pubkey: string, profile: any) {
@@ -127,8 +132,9 @@ export class IndexerService {
 
   async fetchProjects(reset = false): Promise<void> {
     if (reset) {
-      this.offset = 0;
+      this.offset = -1;
       this.totalProjectsFetched = false;
+      this.totalItems = 0;
       this.projects.set([]);
     }
 
@@ -140,31 +146,39 @@ export class IndexerService {
       this.loading.set(true);
       this.error.set(null);
 
-      const url = `${this.indexerUrl}api/query/Angor/projects?offset=${this.offset}&limit=${this.LIMIT}`;
-
+      const params = new URLSearchParams();
+      params.append('limit', this.LIMIT.toString());
+      if (this.offset >= 0) {
+        params.append('offset', this.offset.toString());
+      }
+      
+      const url = `${this.indexerUrl}api/query/Angor/projects?${params.toString()}`;
       console.log('Fetching:', url);
 
-      const response = await this.fetchJson<IndexedProject[]>(url);
+      const { data: response, headers } = await this.fetchJson<IndexedProject[]>(url);
+      
+      if (Array.isArray(response) && response.length > 0) {
+        if (this.offset === -1) {
+          // First fetch, we must double the offset because we 
+          // already retrieved the latest page.
 
-      console.log('Fetched:', url);
-
-      if (Array.isArray(response)) {
-        if (response.length < this.LIMIT) {
-          this.totalProjectsFetched = true;
+          this.totalItems = parseInt(headers.get('pagination-total') || '0');
+          // Calculate the starting offset from the end
+          this.offset = Math.max(0, this.totalItems - this.LIMIT - this.LIMIT);
+        } else {
+          // Move backwards for next fetch
+          this.offset = Math.max(0, this.offset - this.LIMIT);
+          this.totalProjectsFetched = this.offset === 0;
         }
 
-        // First update the UI with projects
-        this.projects.update((existing) => [...existing, ...response]);
-        this.offset += response.length;
+        this.projects.update(existing => [...existing, ...response]);
 
-        // Fetch all profiles in one batch
-        // const pubkeys = response.map((project) => project.projectIdentifier);
         const eventIds = response.map((project) => project.nostrEventId);
-
         if (eventIds.length > 0) {
           this.relay.fetchData(eventIds);
-          // this.relay.fetchProfile(pubkeys);
         }
+      } else {
+        this.totalProjectsFetched = true;
       }
     } catch (err) {
       this.error.set(
@@ -173,6 +187,41 @@ export class IndexerService {
     } finally {
       this.loading.set(false);
     }
+  }
+
+  async getProjects() {
+    try {
+      // Initial request to get total count
+      const response = await fetch(`${this.indexerUrl}api/query/Angor/projects`);
+      const total = parseInt(response.headers.get('pagination-total') || '0', 10);
+      
+      let currentOffset = 0;
+      const allProjects: IndexedProject[] = [];
+      
+      // Continue fetching while there are more items
+      while (currentOffset < total) {
+        const batch = await this.fetchProjectsBatch(currentOffset, this.pageSize);
+        if (!batch || batch.length === 0) break;
+        
+        allProjects.push(...batch);
+        currentOffset += this.pageSize;
+      }
+
+      this.projects.set(allProjects);
+      return allProjects;
+    } catch (error) {
+      console.error('Error fetching projects:', error);
+      throw error;
+    }
+  }
+
+  private async fetchProjectsBatch(offset: number, limit: number) {
+    const url = `${this.indexerUrl}api/query/Angor/projects?offset=${offset}&limit=${limit}`;
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    return await response.json();
   }
 
   getProject(id: string): IndexedProject | undefined {
@@ -187,9 +236,10 @@ export class IndexerService {
       );
       if (project) {
         // Fetch profile in an array of one
-        this.relay.fetchProfile([project.founderKey]);
+        this.relay.fetchProfile([project.data.founderKey]);
       }
-      return project;
+
+      return project.data;
     } catch (err) {
       this.error.set(
         err instanceof Error ? err.message : `Failed to fetch project ${id}`
@@ -206,7 +256,7 @@ export class IndexerService {
       const url = `${this.indexerUrl}api/query/Angor/projects/${id}/stats`;
       console.log('Fetching project stats:', url);
 
-      return await this.fetchJson<ProjectStats>(url);
+      return (await this.fetchJson<ProjectStats>(url)).data;
     } catch (err) {
       this.error.set(
         err instanceof Error
@@ -226,7 +276,7 @@ export class IndexerService {
   ): Promise<ProjectInvestment[]> {
     try {
       const url = `${this.indexerUrl}api/query/Angor/projects/${projectId}/investments?offset=${offset}&limit=${limit}`;
-      return await this.fetchJson<ProjectInvestment[]>(url);
+      return (await this.fetchJson<ProjectInvestment[]>(url)).data;
     } catch (err) {
       this.error.set(
         err instanceof Error
@@ -243,7 +293,7 @@ export class IndexerService {
   ): Promise<ProjectInvestment | null> {
     try {
       const url = `${this.indexerUrl}api/query/Angor/projects/${projectId}/investments/${investorKey}`;
-      return await this.fetchJson<ProjectInvestment>(url);
+      return (await this.fetchJson<ProjectInvestment>(url)).data;
     } catch (err) {
       this.error.set(
         err instanceof Error ? err.message : 'Failed to fetch investor details'
@@ -255,7 +305,7 @@ export class IndexerService {
   async getSupply(): Promise<Supply | null> {
     try {
       const url = `${this.indexerUrl}api/insight/supply`;
-      return await this.fetchJson<Supply>(url);
+      return (await this.fetchJson<Supply>(url)).data;
     } catch (err) {
       this.error.set(
         err instanceof Error ? err.message : 'Failed to fetch supply'
@@ -267,7 +317,7 @@ export class IndexerService {
   async getCirculatingSupply(): Promise<number> {
     try {
       const url = `${this.indexerUrl}api/insight/supply/circulating`;
-      return await this.fetchJson<number>(url);
+      return (await this.fetchJson<number>(url)).data;
     } catch (err) {
       this.error.set(
         err instanceof Error
@@ -281,7 +331,7 @@ export class IndexerService {
   async getAddressBalance(address: string): Promise<AddressBalance | null> {
     try {
       const url = `${this.indexerUrl}api/query/address/${address}`;
-      return await this.fetchJson<AddressBalance>(url);
+      return (await this.fetchJson<AddressBalance>(url)).data;
     } catch (err) {
       this.error.set(
         err instanceof Error ? err.message : 'Failed to fetch address balance'
@@ -297,7 +347,7 @@ export class IndexerService {
   ): Promise<Transaction[]> {
     try {
       const url = `${this.indexerUrl}api/query/address/${address}/transactions?offset=${offset}&limit=${limit}`;
-      return await this.fetchJson<Transaction[]>(url);
+      return (await this.fetchJson<Transaction[]>(url)).data;
     } catch (err) {
       this.error.set(
         err instanceof Error
@@ -311,7 +361,7 @@ export class IndexerService {
   async getTransaction(txId: string): Promise<Transaction | null> {
     try {
       const url = `${this.indexerUrl}api/query/transaction/${txId}`;
-      return await this.fetchJson<Transaction>(url);
+      return (await this.fetchJson<Transaction>(url)).data;
     } catch (err) {
       this.error.set(
         err instanceof Error ? err.message : 'Failed to fetch transaction'
@@ -323,7 +373,7 @@ export class IndexerService {
   async getTransactionHex(txId: string): Promise<string | null> {
     try {
       const url = `${this.indexerUrl}api/query/transaction/${txId}/hex`;
-      const response = await this.fetchJson<string>(url);
+      const response = (await this.fetchJson<string>(url)).data;
       return response !== undefined ? response : null;
     } catch (err) {
       this.error.set(
@@ -338,7 +388,7 @@ export class IndexerService {
       const url = `${this.indexerUrl}api/query/block?${
         offset !== undefined ? `offset=${offset}&` : ''
       }limit=${limit}`;
-      return await this.fetchJson<Block[]>(url);
+      return (await this.fetchJson<Block[]>(url)).data;
     } catch (err) {
       this.error.set(
         err instanceof Error ? err.message : 'Failed to fetch blocks'
@@ -350,7 +400,7 @@ export class IndexerService {
   async getBlockByHash(hash: string): Promise<Block | null> {
     try {
       const url = `${this.indexerUrl}api/query/block/${hash}`;
-      return await this.fetchJson<Block>(url);
+      return (await this.fetchJson<Block>(url)).data;
     } catch (err) {
       this.error.set(
         err instanceof Error ? err.message : 'Failed to fetch block'
@@ -362,7 +412,7 @@ export class IndexerService {
   async getBlockByHeight(height: number): Promise<Block | null> {
     try {
       const url = `${this.indexerUrl}api/query/block/index/${height}`;
-      return await this.fetchJson<Block>(url);
+      return (await this.fetchJson<Block>(url)).data;
     } catch (err) {
       this.error.set(
         err instanceof Error ? err.message : 'Failed to fetch block by height'
@@ -374,7 +424,7 @@ export class IndexerService {
   async getNetworkStats(): Promise<NetworkStats | null> {
     try {
       const url = `${this.indexerUrl}api/stats`;
-      const response = await this.fetchJson<NetworkStats>(url);
+      const response = (await this.fetchJson<NetworkStats>(url)).data;
       return response !== undefined ? response : null;
     } catch (err) {
       this.error.set(
@@ -417,5 +467,9 @@ export class IndexerService {
 
   getCurrentOffset(): number {
     return this.offset;
+  }
+
+  getTotalItems(): number {
+    return this.totalItems;
   }
 }

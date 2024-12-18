@@ -151,22 +151,26 @@ import { CommonModule } from '@angular/common';
               "
             ></div>
 
-            <h3>{{ project.projectIdentifier }}</h3>
+            <h3>
+              @if ((project.metadata?.['name'] ?? '') !== '') {
+                {{ project.metadata?.['name'] }}
+              } @else {
+                {{ project.projectIdentifier }}
+              }
+            </h3>
 
-            <p>
+            <!-- <p>
               Founder: @if ((project.metadata?.['name'] ?? '') !== '') {
               {{ project.metadata?.['name'] ?? '' }}
               } @else {
               <span class="truncate">{{ project.founderKey }}</span>
               <small class="loading-profile">Loading profile...</small>
               }
-            </p>
+            </p> -->
 
             @if ((project.metadata?.['about'] ?? '') !== '') {
             <p class="about">{{ project.metadata?.['about'] ?? '' }}</p>
-            }
-
-            @if (project.details) {
+            } @if (project.details) {
             <div class="project-info">
               <div class="info-item">
                 <div class="info-label">Target Amount</div>
@@ -177,7 +181,7 @@ import { CommonModule } from '@angular/common';
               <div class="info-item">
                 <div class="info-label">Start Date</div>
                 <div class="info-value">
-                  {{ project.details.startDate * 1000 | date: 'shortDate' }}
+                  {{ project.details.startDate * 1000 | date : 'shortDate' }}
                 </div>
               </div>
               <div class="info-item">
@@ -187,7 +191,7 @@ import { CommonModule } from '@angular/common';
               <div class="info-item">
                 <div class="info-label">Expiry Date</div>
                 <div class="info-value">
-                  {{ project.details.expiryDate * 1000 | date: 'shortDate' }}
+                  {{ project.details.expiryDate * 1000 | date : 'shortDate' }}
                 </div>
               </div>
             </div>
@@ -237,17 +241,11 @@ export class ExploreComponent implements OnInit, AfterViewInit, OnDestroy {
     // Listen for profile updates
     this.relay.profileUpdates.subscribe((update) => {
       const id = update.pubkey;
-      console.log('UPDATE!!!', update);
-
-      console.log(JSON.stringify(this.indexer.projects()));
 
       // Find the project from this.indexer.projects() that has the ID.
       const project = this.indexer
         .projects()
         .find((p) => p.details?.nostrPubKey === id);
-
-      console.log('Found project: ', project);
-      console.log('Project details:', update);
 
       if (project) {
         project.metadata = update.profile;
@@ -271,9 +269,6 @@ export class ExploreComponent implements OnInit, AfterViewInit, OnDestroy {
       const project = this.indexer
         .projects()
         .find((p) => p.projectIdentifier === id);
-
-      console.log('Found project: ', project);
-      console.log('Project details:', update);
 
       if (project) {
         project.details = update;
@@ -351,12 +346,9 @@ export class ExploreComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private watchForScrollTrigger() {
-    console.log('Setting up mutation observer');
-
     this.mutationObserver = new MutationObserver(() => {
       const triggerElement = document.querySelector('.scroll-trigger');
       if (triggerElement) {
-        console.log('Scroll trigger found in DOM');
         this.mutationObserver?.disconnect();
         this.setupIntersectionObserver();
       }
@@ -369,8 +361,6 @@ export class ExploreComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private setupIntersectionObserver() {
-    console.log('Setting up intersection observer');
-
     if (!this.scrollTrigger) {
       console.warn('ViewChild scroll trigger not initialized');
       return;
@@ -381,7 +371,6 @@ export class ExploreComponent implements OnInit, AfterViewInit, OnDestroy {
       rootMargin: '100px',
       threshold: 0.1,
     };
-    console.log('Observer options:', options);
 
     // Cleanup existing observer if any
     if (this.observer) {
@@ -390,13 +379,13 @@ export class ExploreComponent implements OnInit, AfterViewInit, OnDestroy {
 
     this.observer = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
-        console.log('Intersection entry:', {
-          isIntersecting: entry.isIntersecting,
-          intersectionRatio: entry.intersectionRatio,
-          boundingClientRect: entry.boundingClientRect,
-          isLoading: this.indexer.loading(),
-          isComplete: this.indexer.isComplete(),
-        });
+        // console.log('Intersection entry:', {
+        //   isIntersecting: entry.isIntersecting,
+        //   intersectionRatio: entry.intersectionRatio,
+        //   boundingClientRect: entry.boundingClientRect,
+        //   isLoading: this.indexer.loading(),
+        //   isComplete: this.indexer.isComplete(),
+        // });
 
         if (entry.isIntersecting) {
           if (this.indexer.loading()) {
@@ -413,9 +402,7 @@ export class ExploreComponent implements OnInit, AfterViewInit, OnDestroy {
       });
     }, options);
 
-    console.log('Scroll trigger element:', this.scrollTrigger.nativeElement);
     this.observer.observe(this.scrollTrigger.nativeElement);
-    console.log('Observer attached to scroll trigger');
   }
 
   async loadMore() {
