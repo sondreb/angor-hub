@@ -55,6 +55,7 @@ import { filter } from 'rxjs/operators';
         overflow: hidden;
         border-radius: 12px;
         background: var(--surface-card);
+        padding: 0;  /* Remove padding from card */
       }
       .project-banner {
         width: 100%;
@@ -62,21 +63,36 @@ import { filter } from 'rxjs/operators';
         background-size: cover;
         background-position: center;
         background-color: rgba(0, 0, 0, 0.1);
+        border-radius: 12px 12px 0 0;
+        margin: -1px;  /* Compensate for any gap */
+        padding: 1px;  /* Ensure full coverage */
       }
       .project-content {
-        padding: 1rem;
+        padding: 1.5rem;  /* Increase padding in content area to compensate */
         position: relative;
-        margin-top: -40px;
+        margin-top: 0;  /* Remove negative margin */
+        padding-top: 3rem; /* Increase top padding to make room for h3 and content */
+        padding-left: 6rem; /* Add left padding to make room for avatar */
+        min-height: 100px; /* Ensure enough height for the avatar */
+      }
+      .project-content h3 {
+        margin-top: 0;  /* Remove default margin */
+        position: relative;  /* Ensure it stays above avatar */
+        z-index: 1;  /* Ensure text stays above avatar */
       }
       .project-avatar {
         width: 80px;
         height: 80px;
         border-radius: 50%;
-        border: 4px solid var(--surface-card);
         background-size: cover;
         background-position: center;
-        margin: 0 auto 1rem;
         background-color: var(--surface-ground);
+        position: absolute;
+        top: -40px; /* Move up to overlap banner */
+        left: 1.5rem; /* Position from left instead of center */
+        transform: none; /* Remove horizontal centering */
+        border: 4px solid var(--background); /* Use theme background color */
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Optional: adds depth */
       }
       .project-info {
         margin-top: 1rem;
