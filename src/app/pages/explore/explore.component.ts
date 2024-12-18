@@ -13,10 +13,11 @@ import { RelayService } from '../../services/relay.service';
 import { IndexerService } from '../../services/indexer.service';
 import { RouterLink } from '@angular/router';
 import { ExploreStateService } from '../../services/explore-state.service';
-import { Router } from '@angular/router';
+import { Router, NavigationEnd } from '@angular/router';
 import { BreadcrumbComponent } from '../../components/breadcrumb.component';
 import { CommonModule } from '@angular/common';
 import { Location } from '@angular/common';
+import { filter } from 'rxjs/operators';
 
 @Component({
   selector: 'app-explore',
@@ -230,6 +231,8 @@ export class ExploreComponent implements OnInit, AfterViewInit, OnDestroy {
   private relay = inject(RelayService);
   private location = inject(Location);
   private navigationSubscription: any;
+  private routerSubscription: any;
+  private isBackNavigation = false;
 
   indexer = inject(IndexerService);
 
@@ -293,16 +296,35 @@ export class ExploreComponent implements OnInit, AfterViewInit, OnDestroy {
       // );
     });
 
-    // Listen for browser back/forward navigation
-    window.addEventListener('popstate', () => {
+    // Replace popstate handling with Router events
+    this.routerSubscription = this.router.events.pipe(
+      filter(event => event instanceof NavigationEnd)
+    ).subscribe(() => {
       if (this.exploreState.hasState) {
-        setTimeout(() => {
-          window.scrollTo({
-            top: this.exploreState.lastScrollPosition,
-            behavior: 'instant'
+        if (this.isBackNavigation) {
+          // Browser back/forward navigation
+          requestAnimationFrame(() => {
+            window.scrollTo({
+              top: this.exploreState.lastScrollPosition,
+              behavior: 'instant'
+            });
           });
-        }, 250); // Increased delay
+        } else {
+          // Regular navigation (e.g. clicking Explore link)
+          setTimeout(() => {
+            window.scrollTo({
+              top: this.exploreState.lastScrollPosition,
+              behavior: 'instant'
+            });
+          }, 100);
+        }
+        this.isBackNavigation = false;
       }
+    });
+
+    // Listen for popstate events to detect browser back/forward
+    window.addEventListener('popstate', () => {
+      this.isBackNavigation = true;
     });
   }
 
@@ -311,14 +333,7 @@ export class ExploreComponent implements OnInit, AfterViewInit, OnDestroy {
 
     if (this.exploreState.hasState && this.indexer.projects().length > 0) {
       this.indexer.restoreOffset(this.exploreState.offset);
-      
-      // Always restore scroll position with delay
-      setTimeout(() => {
-        window.scrollTo({
-          top: this.exploreState.lastScrollPosition,
-          behavior: 'instant'
-        });
-      }, 250);
+      // Remove scroll restoration from here as it's handled by router events
     } else {
       this.exploreState.clearState();
       await this.indexer.fetchProjects();
@@ -373,7 +388,9 @@ export class ExploreComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.navigationSubscription) {
       this.navigationSubscription.unsubscribe();
     }
-    // Remove popstate listener
+    if (this.routerSubscription) {
+      this.routerSubscription.unsubscribe();
+    }
     window.removeEventListener('popstate', () => {});
   }
 
