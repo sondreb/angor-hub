@@ -1,11 +1,13 @@
-import { Component } from '@angular/core';
+import { Component, OnInit, inject } from '@angular/core';
 import { RouterLink } from '@angular/router';
 import { BreadcrumbComponent } from '../../components/breadcrumb.component';
+import { BlogService, BlogPost } from '../../services/blog.service';
+import { DatePipe } from '@angular/common';
 
 @Component({
   selector: 'app-home',
   standalone: true,
-  imports: [RouterLink, BreadcrumbComponent],
+  imports: [RouterLink, BreadcrumbComponent, DatePipe],
   template: `
     <app-breadcrumb [items]="[{ label: 'Home', url: '' }]"></app-breadcrumb>
 
@@ -42,6 +44,49 @@ import { BreadcrumbComponent } from '../../components/breadcrumb.component';
         <p>Monitor your investments and stay updated on project developments.</p>
       </div>
     </div>
+
+    <section class="blog-section">
+      <div class="container">
+        <h2 class="section-title">Latest from the Blog</h2>
+        
+        @if (blogPosts.length > 0) {
+          <div class="blog-grid">
+            <a [href]="blogPosts[0].link" class="blog-post featured" target="_blank">
+              <div class="post-image" [style.background-image]="'url(' + (blogPosts[0].thumbnail || '/assets/images/default-blog.jpg') + ')'">
+              </div>
+              <div class="post-content">
+                <h3>{{blogPosts[0].title}}</h3>
+                <p class="post-date">{{blogPosts[0].pubDate | date:'mediumDate'}}</p>
+                <p class="post-excerpt">{{blogPosts[0].description}}</p>
+              </div>
+            </a>
+            
+            <div class="blog-posts-secondary">
+              @for (post of blogPosts.slice(1); track post.link) {
+                <a [href]="post.link" class="blog-post" target="_blank">
+                  <div class="post-image" [style.background-image]="'url(' + (post.thumbnail || '/assets/images/default-blog.jpg') + ')'">
+                  </div>
+                  <div class="post-content">
+                    <h4>{{post.title}}</h4>
+                    <p class="post-date">{{post.pubDate | date:'mediumDate'}}</p>
+                  </div>
+                </a>
+              }
+            </div>
+          </div>
+          <div class="blog-cta">
+            <a href="https://blog.angor.io" target="_blank" class="blog-button">
+              Explore the Blog
+              <span class="arrow">→</span>
+            </a>
+          </div>
+        } @else {
+          <div class="loading-spinner">
+            <div class="spinner"></div>
+          </div>
+        }
+      </div>
+    </section>
   `,
   styles: [`
     .home-hero {
@@ -144,6 +189,142 @@ import { BreadcrumbComponent } from '../../components/breadcrumb.component';
       opacity: 0.8;
       line-height: 1.6;
     }
+
+    .blog-section {
+      padding: 4rem 2rem;
+      background: var(--background);
+    }
+
+    .section-title {
+      text-align: center;
+      font-size: 2rem;
+      margin-bottom: 3rem;
+      color: var(--text);
+    }
+
+    .blog-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .blog-post {
+      text-decoration: none;
+      color: inherit;
+      border-radius: 12px;
+      overflow: hidden;
+      transition: transform 0.3s ease;
+      background: var(--background);
+      border: 1px solid var(--border);
+    }
+
+    .blog-post:hover {
+      transform: translateY(-4px);
+    }
+
+    .post-image {
+      height: 200px;
+      background-size: cover;
+      background-position: center;
+      background-color: var(--border);
+    }
+
+    .featured .post-image {
+      height: 300px;
+    }
+
+    .post-content {
+      padding: 1.5rem;
+    }
+
+    .post-content h3 {
+      font-size: 1.5rem;
+      margin: 0 0 0.5rem;
+      color: var(--text);
+    }
+
+    .post-content h4 {
+      font-size: 1.1rem;
+      margin: 0 0 0.5rem;
+      color: var(--text);
+    }
+
+    .post-date {
+      font-size: 0.9rem;
+      opacity: 0.7;
+      margin: 0 0 1rem;
+    }
+
+    .post-excerpt {
+      opacity: 0.8;
+      line-height: 1.5;
+    }
+
+    .blog-posts-secondary {
+      display: grid;
+      gap: 1rem;
+    }
+
+    .featured {
+      grid-row: span 3;
+    }
+
+    @media (max-width: 768px) {
+      .blog-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .featured {
+        grid-row: auto;
+      }
+    }
+
+    .blog-cta {
+      text-align: center;
+      margin-top: 3rem;
+    }
+
+    .blog-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      font-size: 1.1rem;
+      font-weight: 500;
+      color: var(--text);
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      text-decoration: none;
+      transition: all 0.3s ease;
+    }
+
+    .blog-button:hover {
+      background: var(--background);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+      border-color: var(--accent);
+      color: var(--accent);
+    }
+
+    .blog-button .arrow {
+      transition: transform 0.3s ease;
+    }
+
+    .blog-button:hover .arrow {
+      transform: translateX(4px);
+    }
   `]
 })
-export class HomeComponent {}
+export class HomeComponent implements OnInit {
+  private blogService = inject(BlogService);
+  blogPosts: BlogPost[] = [];
+
+  ngOnInit() {
+    this.blogService.getLatestPosts().subscribe(
+      posts => this.blogPosts = posts
+    );
+  }
+}
