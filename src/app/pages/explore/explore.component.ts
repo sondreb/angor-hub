@@ -71,8 +71,8 @@ import { filter } from 'rxjs/operators';
         padding: 1.5rem; /* Increase padding in content area to compensate */
         position: relative;
         margin-top: 0; /* Remove negative margin */
-        padding-top: 3rem; /* Increase top padding to make room for h3 and content */
-        padding-left: 6rem; /* Add left padding to make room for avatar */
+        padding-top: 4rem; /* Increased from 3rem to give more space below avatar */
+        padding-left: 1.5rem; /* Changed from 6rem to use full width */
         min-height: 100px; /* Ensure enough height for the avatar */
       }
       .project-content h3 {
@@ -89,8 +89,8 @@ import { filter } from 'rxjs/operators';
         background-color: var(--surface-ground);
         position: absolute;
         top: -40px; /* Move up to overlap banner */
-        left: 1.5rem; /* Position from left instead of center */
-        transform: none; /* Remove horizontal centering */
+        left: 50%; /* Center the avatar */
+        transform: translateX(-50%); /* Center the avatar */
         border: 4px solid var(--background); /* Use theme background color */
         box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Optional: adds depth */
       }
@@ -110,7 +110,7 @@ import { filter } from 'rxjs/operators';
       }
       .info-value {
         font-size: 1rem;
-        font-weight: 500;
+        font-weight: 900;
       }
       .funding-progress {
         margin-top: 1.5rem;
@@ -236,30 +236,45 @@ import { filter } from 'rxjs/operators';
 
             @if ((project.metadata?.['about'] ?? '') !== '') {
             <p class="about">{{ project.metadata?.['about'] ?? '' }}</p>
-            } @if (project.details) {
+            } 
+            @else {
+            <p class="about"></p>
+            }
+            
+            @if (project.details) {
             <div class="project-info">
-              <div class="info-item">
+              <!-- <div class="info-item">
                 <div class="info-label">Target Amount</div>
                 <div class="info-value">
                   {{ project.details.targetAmount }} BTC
                 </div>
-              </div>
+              </div> -->
               <div class="info-item">
                 <div class="info-label">Start Date</div>
                 <div class="info-value">
                   {{ project.details.startDate * 1000 | date : 'mediumDate' }}
                 </div>
               </div>
-              <div class="info-item">
+              <!-- <div class="info-item">
                 <div class="info-label">Penalty Days</div>
                 <div class="info-value">{{ project.details.penaltyDays }}</div>
-              </div>
-              <div class="info-item">
+              </div> -->
+              <!-- <div class="info-item">
                 <div class="info-label">Expiry Date</div>
                 <div class="info-value">
                   {{ project.details.expiryDate * 1000 | date : 'mediumDate' }}
                 </div>
+              </div> -->
+
+              <div class="info-item">
+                <div class="info-label">Investors</div>
+                <div class="info-value">
+                  {{ project.stats?.investorCount }}
+                </div>
               </div>
+
+              
+
             </div>
             <div class="funding-progress">
               <div class="progress-stats">
@@ -268,7 +283,7 @@ import { filter } from 'rxjs/operators';
                     project.stats?.amountInvested
                       ? project.stats!.amountInvested / 100000000
                       : '0'
-                  }}
+                  }} / {{ project.details.targetAmount}}
                   BTC raised</span
                 >
                 <span class="funding-percentage"

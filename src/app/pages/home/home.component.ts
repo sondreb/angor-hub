@@ -10,7 +10,7 @@ import { DatePipe } from '@angular/common';
   imports: [RouterLink, BreadcrumbComponent, DatePipe],
   template: `
 
-    <section class="hero home-hero2">
+    <section class="hero">
     <app-breadcrumb [items]="[{ label: 'Home', url: '' }]"></app-breadcrumb>
 
       <div class="hero-wrapper">
