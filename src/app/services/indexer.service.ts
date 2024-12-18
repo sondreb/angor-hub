@@ -1,4 +1,5 @@
-import { Injectable, signal } from '@angular/core';
+import { Injectable, signal, inject } from '@angular/core';
+import { RelayService } from './relay.service';
 
 export interface IndexedProject {
   founderKey: string;
@@ -6,6 +7,11 @@ export interface IndexedProject {
   projectIdentifier: string;
   createdOnBlock: number;
   trxId: string;
+  profile?: {
+    name?: string;
+    picture?: string;
+    about?: string;
+  };
 }
 
 export interface ProjectStats {
@@ -63,6 +69,7 @@ export class IndexerService {
   private readonly indexerUrl = 'https://tbtc.indexer.angor.io/';
   private offset = 0;
   private totalProjectsFetched = false;
+  private relay = inject(RelayService);
 
   public loading = signal<boolean>(false);
   public projects = signal<IndexedProject[]>([]);
@@ -104,6 +111,13 @@ export class IndexerService {
           this.totalProjectsFetched = true;
         }
 
+        // Fetch profiles for each project
+        await Promise.all(
+          response.map(async (project) => {
+            project.profile = await this.relay.fetchProfile(project.founderKey);
+          })
+        );
+
         this.projects.update(existing => [...existing, ...response]);
         this.offset += response.length;
       }
@@ -121,10 +135,11 @@ export class IndexerService {
   async fetchProject(id: string): Promise<IndexedProject | null> {
     try {
       this.loading.set(true);
-      const url = `${this.indexerUrl}api/query/Angor/projects/${id}`;
-      console.log('Fetching project:', url);
-      
-      return await this.fetchJson<IndexedProject>(url);
+      const project = await this.fetchJson<IndexedProject>(`${this.indexerUrl}api/query/Angor/projects/${id}`);
+      if (project) {
+        project.profile = await this.relay.fetchProfile(project.founderKey);
+      }
+      return project;
     } catch (err) {
       this.error.set(err instanceof Error ? err.message : `Failed to fetch project ${id}`);
       return null;

@@ -56,7 +56,17 @@ import { BreadcrumbComponent } from '../../components/breadcrumb.component';
         >
           <h3>{{ project.projectIdentifier }}</h3>
           <p>Created on block: {{ project.createdOnBlock }}</p>
-          <p>Founder: {{ project.founderKey }}</p>
+          <p>
+            Founder: 
+            @if (project.profile?.name) {
+              {{ project.profile?.name }}
+            } @else {
+              {{ project.founderKey }}
+            }
+          </p>
+          @if (project.profile?.about) {
+            <p>{{ project.profile?.about }}</p>
+          }
         </a>
         }
       </section>

@@ -81,6 +81,43 @@ export class RelayService {
     this.loading.set(false);
   }
 
+  async fetchProfile(pubkey: string): Promise<any> {
+    const ndk = new NDK({
+      explicitRelayUrls: this.relayUrls,
+    });
+
+    await ndk.connect();
+
+    try {
+      const filter = {
+        kinds: [0],
+        authors: [pubkey],
+        limit: 1
+      };
+
+      const sub = ndk.subscribe(filter);
+      
+      return new Promise((resolve) => {
+        const timeout = setTimeout(() => {
+          // sub.close();
+          resolve(null);
+        }, 5000); // 5 second timeout
+
+        sub.on('event', (event: NDKEvent) => {
+          clearTimeout(timeout);
+          // sub.close();
+          try {
+            resolve(JSON.parse(event.content));
+          } catch {
+            resolve(null);
+          }
+        });
+      });
+    } finally {
+      // await ndk.close();
+    }
+  }
+
   private subscribeToProjects() {
     // this.loading.set(true);
 
