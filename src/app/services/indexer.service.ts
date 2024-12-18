@@ -15,6 +15,7 @@ export interface IndexedProject {
   };
   details?: ProjectUpdate;
   metadata?: NDKUserProfile;
+  stats?: ProjectStats;
 }
 
 export interface ProjectStats {

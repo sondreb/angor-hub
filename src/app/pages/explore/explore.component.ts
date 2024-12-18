@@ -55,7 +55,7 @@ import { filter } from 'rxjs/operators';
         overflow: hidden;
         border-radius: 12px;
         background: var(--surface-card);
-        padding: 0;  /* Remove padding from card */
+        padding: 0; /* Remove padding from card */
       }
       .project-banner {
         width: 100%;
@@ -64,21 +64,21 @@ import { filter } from 'rxjs/operators';
         background-position: center;
         background-color: rgba(0, 0, 0, 0.1);
         border-radius: 12px 12px 0 0;
-        margin: -1px;  /* Compensate for any gap */
-        padding: 1px;  /* Ensure full coverage */
+        margin: -1px; /* Compensate for any gap */
+        padding: 1px; /* Ensure full coverage */
       }
       .project-content {
-        padding: 1.5rem;  /* Increase padding in content area to compensate */
+        padding: 1.5rem; /* Increase padding in content area to compensate */
         position: relative;
-        margin-top: 0;  /* Remove negative margin */
+        margin-top: 0; /* Remove negative margin */
         padding-top: 3rem; /* Increase top padding to make room for h3 and content */
         padding-left: 6rem; /* Add left padding to make room for avatar */
         min-height: 100px; /* Ensure enough height for the avatar */
       }
       .project-content h3 {
-        margin-top: 0;  /* Remove default margin */
-        position: relative;  /* Ensure it stays above avatar */
-        z-index: 1;  /* Ensure text stays above avatar */
+        margin-top: 0; /* Remove default margin */
+        position: relative; /* Ensure it stays above avatar */
+        z-index: 1; /* Ensure text stays above avatar */
       }
       .project-avatar {
         width: 80px;
@@ -92,7 +92,7 @@ import { filter } from 'rxjs/operators';
         left: 1.5rem; /* Position from left instead of center */
         transform: none; /* Remove horizontal centering */
         border: 4px solid var(--background); /* Use theme background color */
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1); /* Optional: adds depth */
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); /* Optional: adds depth */
       }
       .project-info {
         margin-top: 1rem;
@@ -111,6 +111,46 @@ import { filter } from 'rxjs/operators';
       .info-value {
         font-size: 1rem;
         font-weight: 500;
+      }
+      .funding-progress {
+        margin-top: 1.5rem;
+        padding-top: 1rem;
+        border-top: 1px solid var(--border);
+      }
+      .progress-bar {
+        width: 100%;
+        height: 8px;
+        background: rgba(0, 0, 0, 0.1);
+        border-radius: 4px;
+        overflow: hidden;
+        margin: 0.5rem 0;
+      }
+      .progress-fill {
+        height: 100%;
+        background: var(--accent);
+        transition: width 0.3s ease;
+      }
+      .progress-stats {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        margin-bottom: 0.5rem;
+      }
+      .investment-stats {
+        display: flex;
+        justify-content: space-between;
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+        margin-top: 0.5rem;
+      }
+      .invested-amount {
+        font-weight: 600;
+        color: var(--accent-dark);
+      }
+      .funding-percentage {
+        font-weight: 600;
+        color: var(--accent);
       }
     `,
   ], // Remove fade-out animation styles
@@ -171,9 +211,9 @@ import { filter } from 'rxjs/operators';
 
             <h3>
               @if ((project.metadata?.['name'] ?? '') !== '') {
-                {{ project.metadata?.['name'] }}
+              {{ project.metadata?.['name'] }}
               } @else {
-                {{ project.projectIdentifier }}
+              {{ project.projectIdentifier }}
               }
             </h3>
 
@@ -213,6 +253,27 @@ import { filter } from 'rxjs/operators';
                 </div>
               </div>
             </div>
+            <div class="funding-progress">
+              <div class="progress-stats">
+                <span
+                  >{{
+                    project.stats?.amountInvested
+                      ? project.stats!.amountInvested / 100000000
+                      : '0'
+                  }}
+                  BTC raised</span
+                >
+                <span class="funding-percentage"
+                  >{{ getFundingPercentage(project) }}%</span
+                >
+              </div>
+              <div class="progress-bar">
+                <div
+                  class="progress-fill"
+                  [style.width]="getFundingPercentage(project) + '%'"
+                ></div>
+              </div>
+            </div>
             }
           </div>
         </a>
@@ -249,6 +310,7 @@ export class ExploreComponent implements OnInit, AfterViewInit, OnDestroy {
   private navigationSubscription: any;
   private routerSubscription: any;
   private isBackNavigation = false;
+  private projectObserver: IntersectionObserver | null = null;
 
   indexer = inject(IndexerService);
 
@@ -313,30 +375,30 @@ export class ExploreComponent implements OnInit, AfterViewInit, OnDestroy {
     });
 
     // Replace popstate handling with Router events
-    this.routerSubscription = this.router.events.pipe(
-      filter(event => event instanceof NavigationEnd)
-    ).subscribe(() => {
-      if (this.exploreState.hasState) {
-        if (this.isBackNavigation) {
-          // Browser back/forward navigation
-          requestAnimationFrame(() => {
-            window.scrollTo({
-              top: this.exploreState.lastScrollPosition,
-              behavior: 'instant'
+    this.routerSubscription = this.router.events
+      .pipe(filter((event) => event instanceof NavigationEnd))
+      .subscribe(() => {
+        if (this.exploreState.hasState) {
+          if (this.isBackNavigation) {
+            // Browser back/forward navigation
+            requestAnimationFrame(() => {
+              window.scrollTo({
+                top: this.exploreState.lastScrollPosition,
+                behavior: 'instant',
+              });
             });
-          });
-        } else {
-          // Regular navigation (e.g. clicking Explore link)
-          setTimeout(() => {
-            window.scrollTo({
-              top: this.exploreState.lastScrollPosition,
-              behavior: 'instant'
-            });
-          }, 100);
+          } else {
+            // Regular navigation (e.g. clicking Explore link)
+            setTimeout(() => {
+              window.scrollTo({
+                top: this.exploreState.lastScrollPosition,
+                behavior: 'instant',
+              });
+            }, 100);
+          }
+          this.isBackNavigation = false;
         }
-        this.isBackNavigation = false;
-      }
-    });
+      });
 
     // Listen for popstate events to detect browser back/forward
     window.addEventListener('popstate', () => {
@@ -346,13 +408,15 @@ export class ExploreComponent implements OnInit, AfterViewInit, OnDestroy {
 
   async ngOnInit() {
     this.watchForScrollTrigger();
+    this.setupProjectObserver();
 
     if (this.exploreState.hasState && this.indexer.projects().length > 0) {
       this.indexer.restoreOffset(this.exploreState.offset);
-      // Remove scroll restoration from here as it's handled by router events
+      this.observeProjects(); // Add this to observe initial projects
     } else {
       this.exploreState.clearState();
       await this.indexer.fetchProjects();
+      this.observeProjects(); // Add this to observe initial projects
     }
   }
 
@@ -362,7 +426,7 @@ export class ExploreComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.loadingTimeout) {
       clearTimeout(this.loadingTimeout);
     }
-    
+
     this.loadingTimeout = setTimeout(() => {
       // Use documentElement.scrollTop for more accurate position
       const scrollPosition = Math.max(
@@ -370,7 +434,7 @@ export class ExploreComponent implements OnInit, AfterViewInit, OnDestroy {
         document.documentElement.scrollTop,
         document.body.scrollTop
       );
-      
+
       this.exploreState.saveState(
         scrollPosition,
         this.indexer.getCurrentOffset()
@@ -381,6 +445,7 @@ export class ExploreComponent implements OnInit, AfterViewInit, OnDestroy {
   ngAfterViewInit() {
     // Watch for DOM changes to detect when scroll trigger is added
     this.watchForScrollTrigger();
+    this.observeProjects();
   }
 
   ngOnDestroy() {
@@ -408,6 +473,9 @@ export class ExploreComponent implements OnInit, AfterViewInit, OnDestroy {
       this.routerSubscription.unsubscribe();
     }
     window.removeEventListener('popstate', () => {});
+    if (this.projectObserver) {
+      this.projectObserver.disconnect();
+    }
   }
 
   private watchForScrollTrigger() {
@@ -470,6 +538,62 @@ export class ExploreComponent implements OnInit, AfterViewInit, OnDestroy {
     this.observer.observe(this.scrollTrigger.nativeElement);
   }
 
+  private setupProjectObserver() {
+    this.projectObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const projectId = entry.target.getAttribute('data-index');
+            if (projectId !== null) {
+              const project = this.indexer.projects()[parseInt(projectId)];
+              if (project && !project.stats) {
+                this.loadProjectStats(project);
+              }
+            }
+          }
+        });
+      },
+      { threshold: 0.1 }
+    );
+  }
+
+  private observeProjects() {
+    // Wait for Angular to finish rendering
+    setTimeout(() => {
+      document.querySelectorAll('.project-card').forEach((card) => {
+        if (!this.projectObserver) return;
+        // Only observe cards that haven't been observed yet
+        if (!card.getAttribute('data-observed')) {
+          this.projectObserver.observe(card);
+          card.setAttribute('data-observed', 'true');
+        }
+      });
+    }, 100); // Give Angular time to render
+  }
+
+  private async loadProjectStats(project: any) {
+    console.log('LOAD PROJECT STATUS:', project);
+    try {
+      project.stats = await this.indexer.fetchProjectStats(
+        project.projectIdentifier
+      );
+    } catch (error) {
+      console.error('Error loading project stats:', error);
+    }
+  }
+
+  getFundingPercentage(project: any): number {
+    if (!project.stats?.amountInvested || !project.details?.targetAmount) {
+      return 0;
+    }
+
+    let invested = project.stats.amountInvested;
+    let target = project.details.targetAmount * 100000000;
+    const percentage = (invested / target) * 100;
+
+    return Math.min(Math.round(percentage * 10) / 10, 999.9); // Cap at 999.9% and round to 1 decimal
+  }
+
   async loadMore() {
     console.log('LoadMore called:', {
       isLoading: this.indexer.loading(),
@@ -480,6 +604,8 @@ export class ExploreComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!this.indexer.loading() && !this.indexer.isComplete()) {
       console.log('Executing load more');
       await this.indexer.loadMore();
+      // Observe new projects after they're loaded
+      this.observeProjects();
       console.log(
         'Load more completed, new project count:',
         this.indexer.projects().length
