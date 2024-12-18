@@ -16,6 +16,7 @@ import { ExploreStateService } from '../../services/explore-state.service';
 import { Router } from '@angular/router';
 import { BreadcrumbComponent } from '../../components/breadcrumb.component';
 import { CommonModule } from '@angular/common';
+import { Location } from '@angular/common';
 
 @Component({
   selector: 'app-explore',
@@ -227,6 +228,8 @@ export class ExploreComponent implements OnInit, AfterViewInit, OnDestroy {
   private exploreState = inject(ExploreStateService);
   private router = inject(Router);
   private relay = inject(RelayService);
+  private location = inject(Location);
+  private navigationSubscription: any;
 
   indexer = inject(IndexerService);
 
@@ -289,23 +292,34 @@ export class ExploreComponent implements OnInit, AfterViewInit, OnDestroy {
       //   })
       // );
     });
+
+    // Listen for browser back/forward navigation
+    window.addEventListener('popstate', () => {
+      if (this.exploreState.hasState) {
+        setTimeout(() => {
+          window.scrollTo({
+            top: this.exploreState.lastScrollPosition,
+            behavior: 'instant'
+          });
+        }, 250); // Increased delay
+      }
+    });
   }
 
   async ngOnInit() {
     this.watchForScrollTrigger();
 
-    // Always check if we actually have projects loaded
     if (this.exploreState.hasState && this.indexer.projects().length > 0) {
       this.indexer.restoreOffset(this.exploreState.offset);
-
-      queueMicrotask(() => {
+      
+      // Always restore scroll position with delay
+      setTimeout(() => {
         window.scrollTo({
           top: this.exploreState.lastScrollPosition,
-          behavior: 'instant',
+          behavior: 'instant'
         });
-      });
+      }, 250);
     } else {
-      // Either no state or no projects loaded - start fresh
       this.exploreState.clearState();
       await this.indexer.fetchProjects();
     }
@@ -313,11 +327,24 @@ export class ExploreComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @HostListener('window:scroll', ['$event'])
   onScroll() {
-    // Save both scroll position and current offset
-    this.exploreState.saveState(
-      window.scrollY,
-      this.indexer.getCurrentOffset()
-    );
+    // Debounce scroll events to avoid excessive updates
+    if (this.loadingTimeout) {
+      clearTimeout(this.loadingTimeout);
+    }
+    
+    this.loadingTimeout = setTimeout(() => {
+      // Use documentElement.scrollTop for more accurate position
+      const scrollPosition = Math.max(
+        window.pageYOffset,
+        document.documentElement.scrollTop,
+        document.body.scrollTop
+      );
+      
+      this.exploreState.saveState(
+        scrollPosition,
+        this.indexer.getCurrentOffset()
+      );
+    }, 50);
   }
 
   ngAfterViewInit() {
@@ -343,6 +370,11 @@ export class ExploreComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.indexer.projects().length === 0) {
       this.exploreState.clearState();
     }
+    if (this.navigationSubscription) {
+      this.navigationSubscription.unsubscribe();
+    }
+    // Remove popstate listener
+    window.removeEventListener('popstate', () => {});
   }
 
   private watchForScrollTrigger() {
