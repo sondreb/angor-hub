@@ -287,10 +287,21 @@ export class IndexerService {
   }
 
   resetProjects(): void {
+    this.offset = 0;
+    this.totalProjectsFetched = false;
+    this.projects.set([]);
     this.fetchProjects(true);
   }
 
   isComplete(): boolean {
     return this.totalProjectsFetched;
+  }
+
+  restoreOffset(offset: number) {
+    this.offset = offset;
+  }
+
+  getCurrentOffset(): number {
+    return this.offset;
   }
 }

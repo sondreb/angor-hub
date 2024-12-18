@@ -1,7 +1,8 @@
-import { Component, inject, ElementRef, ViewChild, AfterViewInit, OnDestroy } from '@angular/core';
+import { Component, inject, ElementRef, ViewChild, AfterViewInit, OnDestroy, OnInit, HostListener } from '@angular/core';
 import { RelayService } from '../../services/relay.service';
 import { IndexerService } from '../../services/indexer.service';
 import { RouterLink } from '@angular/router';
+import { ExploreStateService } from '../../services/explore-state.service';
 
 @Component({
   selector: 'app-explore',
@@ -60,17 +61,43 @@ import { RouterLink } from '@angular/router';
     </div>
   `,
 })
-export class ExploreComponent implements AfterViewInit, OnDestroy {
+export class ExploreComponent implements OnInit, AfterViewInit, OnDestroy {
   @ViewChild('scrollTrigger') scrollTrigger!: ElementRef;
   private observer: IntersectionObserver | null = null;
   private mutationObserver: MutationObserver | null = null;
   private loadingTimeout: any = null;
+  private exploreState = inject(ExploreStateService);
 
   indexer = inject(IndexerService);
 
   async ngOnInit() {
-    await this.indexer.fetchProjects();
-    console.log(this.indexer);
+    // Initialize the observer first
+    this.watchForScrollTrigger();
+
+    if (this.exploreState.hasState) {
+      // Restore the offset in the indexer service
+      this.indexer.restoreOffset(this.exploreState.offset);
+      
+      // Then restore the data
+      await this.indexer.fetchProjects();
+
+      // After data is loaded, restore scroll position
+      queueMicrotask(() => {
+        window.scrollTo({
+          top: this.exploreState.lastScrollPosition,
+          behavior: 'instant'
+        });
+      });
+    } else {
+      // Fresh load
+      await this.indexer.fetchProjects();
+    }
+  }
+
+  @HostListener('window:scroll', ['$event'])
+  onScroll() {
+    // Save both scroll position and current offset
+    this.exploreState.saveState(window.scrollY, this.indexer.getCurrentOffset());
   }
 
   ngAfterViewInit() {
@@ -88,6 +115,8 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
     if (this.loadingTimeout) {
       clearTimeout(this.loadingTimeout);
     }
+    // Optionally clear state when navigating away
+    // this.exploreState.clearState();
   }
 
   private watchForScrollTrigger() {
@@ -122,6 +151,11 @@ export class ExploreComponent implements AfterViewInit, OnDestroy {
       threshold: 0.1
     };
     console.log('Observer options:', options);
+
+    // Cleanup existing observer if any
+    if (this.observer) {
+      this.observer.disconnect();
+    }
 
     this.observer = new IntersectionObserver((entries) => {
       entries.forEach(entry => {
