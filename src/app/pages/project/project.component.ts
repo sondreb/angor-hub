@@ -6,13 +6,20 @@ import {
   IndexerService,
 } from '../../services/indexer.service';
 import { CommonModule } from '@angular/common';
+import { BreadcrumbComponent } from '../../components/breadcrumb.component';
 
 @Component({
   selector: 'app-project',
   standalone: true,
-  imports: [CommonModule],
+  imports: [CommonModule, BreadcrumbComponent],
   template: `
     <div class="container">
+      <app-breadcrumb [items]="[
+        { label: 'Home', url: '/' },
+        { label: 'Explore', url: '/explore' },
+        { label: projectId, url: '' }
+      ]"></app-breadcrumb>
+
       <h1 class="project-title">{{ projectId }}</h1>
 
       @if (project()) {
