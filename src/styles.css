@@ -558,7 +558,7 @@ footer {
 }
 
 .hero-content h1 {
-  font-size: 4.5rem;
+  font-size: 3rem;
   line-height: 1.1;
   margin-bottom: 1.5rem;
   background: linear-gradient(45deg, var(--text), var(--accent));
