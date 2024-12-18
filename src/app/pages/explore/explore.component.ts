@@ -48,6 +48,52 @@ import { CommonModule } from '@angular/common';
         font-size: 0.9rem;
         color: var(--text-secondary);
       }
+      .project-card {
+        position: relative;
+        overflow: hidden;
+        border-radius: 12px;
+        background: var(--surface-card);
+      }
+      .project-banner {
+        width: 100%;
+        height: 120px;
+        background-size: cover;
+        background-position: center;
+        background-color: rgba(0, 0, 0, 0.1);
+      }
+      .project-content {
+        padding: 1rem;
+        position: relative;
+        margin-top: -40px;
+      }
+      .project-avatar {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        border: 4px solid var(--surface-card);
+        background-size: cover;
+        background-position: center;
+        margin: 0 auto 1rem;
+        background-color: var(--surface-ground);
+      }
+      .project-info {
+        margin-top: 1rem;
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1rem;
+      }
+      .info-item {
+        text-align: center;
+      }
+      .info-label {
+        font-size: 0.8rem;
+        color: var(--text-secondary);
+        margin-bottom: 0.25rem;
+      }
+      .info-value {
+        font-size: 1rem;
+        font-weight: 500;
+      }
     `,
   ], // Remove fade-out animation styles
   template: `
@@ -86,33 +132,67 @@ import { CommonModule } from '@angular/common';
           class="project-card"
           [attr.data-index]="i"
         >
-          <h3>{{ project.projectIdentifier }}</h3>
-          <p>Created on block: {{ project.createdOnBlock }}</p>
-          <p>
-            Founder: @if (project.metadata?.name) {
-            {{ project.metadata?.name }}
-            } @else {
-            <span class="truncate">{{ project.founderKey }}</span>
-            <small class="loading-profile">Loading profile...</small>
-            }
-          </p>
-          @if (project.metadata?.about) {
-          <p class="about">{{ project.metadata?.about }}</p>
-          } META:
-          {{ project.metadata | json }}
+          <div
+            class="project-banner"
+            [style.background-image]="
+              project.metadata?.['banner'] ?? ''
+                ? 'url(' + (project.metadata?.['banner'] ?? '') + ')'
+                : 'none'
+            "
+          ></div>
 
-          <!-- Add new project details -->
-          @if (project.details) {
-          <div class="project-details">
-            <p>Stages: {{ project.details.stages.length }}</p>
-            <p>Start Date: {{ project.details.startDate | date }}</p>
-            <p>Expiry Date: {{ project.details.expiryDate | date }}</p>
-            <p>Penalty Days: {{ project.details.penaltyDays }}</p>
+          <div class="project-content">
+            <div
+              class="project-avatar"
+              [style.background-image]="
+                project.metadata?.['picture'] ?? ''
+                  ? 'url(' + (project.metadata?.['picture'] ?? '') + ')'
+                  : 'none'
+              "
+            ></div>
+
+            <h3>{{ project.projectIdentifier }}</h3>
+
             <p>
-              Target Amount: {{ project.details.targetAmount / 100000000 }} BTC
+              Founder: @if ((project.metadata?.['name'] ?? '') !== '') {
+              {{ project.metadata?.['name'] ?? '' }}
+              } @else {
+              <span class="truncate">{{ project.founderKey }}</span>
+              <small class="loading-profile">Loading profile...</small>
+              }
             </p>
+
+            @if ((project.metadata?.['about'] ?? '') !== '') {
+            <p class="about">{{ project.metadata?.['about'] ?? '' }}</p>
+            }
+
+            @if (project.details) {
+            <div class="project-info">
+              <div class="info-item">
+                <div class="info-label">Target Amount</div>
+                <div class="info-value">
+                  {{ project.details.targetAmount / 100000000 }} BTC
+                </div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">Start Date</div>
+                <div class="info-value">
+                  {{ project.details.startDate | date: 'shortDate' }}
+                </div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">Penalty Days</div>
+                <div class="info-value">{{ project.details.penaltyDays }}</div>
+              </div>
+              <div class="info-item">
+                <div class="info-label">Expiry Date</div>
+                <div class="info-value">
+                  {{ project.details.expiryDate | date: 'shortDate' }}
+                </div>
+              </div>
+            </div>
+            }
           </div>
-          }
         </a>
         }
       </section>
