@@ -205,7 +205,7 @@ import { DatePipe } from '@angular/common';
     .blog-grid {
       display: grid;
       grid-template-columns: 1fr 1fr;
-      gap: 2rem;
+      gap: 1.5rem;
       max-width: 1200px;
       margin: 0 auto;
     }
@@ -218,24 +218,36 @@ import { DatePipe } from '@angular/common';
       transition: transform 0.3s ease;
       background: var(--background);
       border: 1px solid var(--border);
+      display: flex;
+    }
+
+    .featured.blog-post {
+      flex-direction: column;
     }
 
     .blog-post:hover {
-      transform: translateY(-4px);
+      transform: translateY(-2px);
     }
 
     .post-image {
-      height: 200px;
+      height: 100px;
+      min-width: 150px;
       background-size: cover;
       background-position: center;
       background-color: var(--border);
     }
 
     .featured .post-image {
-      height: 300px;
+      height: 250px;
+      min-width: 100%;
     }
 
     .post-content {
+      padding: 1rem;
+      flex: 1;
+    }
+
+    .featured .post-content {
       padding: 1.5rem;
     }
 
@@ -246,29 +258,30 @@ import { DatePipe } from '@angular/common';
     }
 
     .post-content h4 {
-      font-size: 1.1rem;
-      margin: 0 0 0.5rem;
+      font-size: 1rem;
+      margin: 0 0 0.25rem;
       color: var(--text);
     }
 
     .post-date {
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       opacity: 0.7;
-      margin: 0 0 1rem;
+      margin: 0;
     }
 
     .post-excerpt {
       opacity: 0.8;
-      line-height: 1.5;
+      line-height: 1.4;
+      margin-top: 0.5rem;
     }
 
     .blog-posts-secondary {
       display: grid;
-      gap: 1rem;
+      gap: 0.75rem;
     }
 
     .featured {
-      grid-row: span 3;
+      grid-row: span 2;
     }
 
     @media (max-width: 768px) {
@@ -278,6 +291,15 @@ import { DatePipe } from '@angular/common';
 
       .featured {
         grid-row: auto;
+      }
+
+      .blog-post {
+        flex-direction: column;
+      }
+
+      .post-image {
+        height: 150px;
+        min-width: 100%;
       }
     }
 
@@ -322,9 +344,7 @@ export class HomeComponent implements OnInit {
   private blogService = inject(BlogService);
   blogPosts: BlogPost[] = [];
 
-  ngOnInit() {
-    this.blogService.getLatestPosts().subscribe(
-      posts => this.blogPosts = posts
-    );
+  async ngOnInit() {
+    this.blogPosts = await this.blogService.getLatestPosts();
   }
 }
