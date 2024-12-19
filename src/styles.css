@@ -111,7 +111,6 @@ footer {
 .hero {
   padding: 0 1.5rem 1rem 1.5rem;
   background: linear-gradient(to bottom, var(--header-bg), var(--background));
-  border-bottom: 1px solid var(--border);
   text-align: center;
   color: var(--text);
 }

@@ -389,9 +389,6 @@ import { RelayService } from '../../services/relay.service';
 
       .hero {
         height: 200px;
-        background-size: cover;
-        background-position: center;
-        margin-bottom: 2rem;
       }
 
       .info-stack {
