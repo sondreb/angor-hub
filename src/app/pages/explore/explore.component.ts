@@ -333,6 +333,8 @@ export class ExploreComponent implements OnInit, AfterViewInit, OnDestroy {
   private routerSubscription: any;
   private isBackNavigation = false;
   private projectObserver: IntersectionObserver | null = null;
+  private isLoadingMore = false;
+  private loadMoreQueued = false;
 
   indexer = inject(IndexerService);
 
@@ -501,6 +503,8 @@ export class ExploreComponent implements OnInit, AfterViewInit, OnDestroy {
     if (this.projectObserver) {
       this.projectObserver.disconnect();
     }
+    this.isLoadingMore = false;
+    this.loadMoreQueued = false;
   }
 
   private watchForScrollTrigger() {
@@ -619,21 +623,39 @@ export class ExploreComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   async loadMore() {
-    console.log('LoadMore called:', {
-      isLoading: this.indexer.loading(),
-      isComplete: this.indexer.isComplete(),
-      currentProjectCount: this.indexer.projects().length,
-    });
+    // console.log('LoadMore called:', {
+    //   isLoading: this.indexer.loading(),
+    //   isComplete: this.indexer.isComplete(),
+    //   currentProjectCount: this.indexer.projects().length,
+    //   isLoadingMore: this.isLoadingMore,
+    //   loadMoreQueued: this.loadMoreQueued
+    // });
+
+    // If already loading, queue up one more request
+    if (this.isLoadingMore) {
+      this.loadMoreQueued = true;
+      console.log('Load more queued');
+      return;
+    }
 
     if (!this.indexer.loading() && !this.indexer.isComplete()) {
-      console.log('Executing load more');
-      await this.indexer.loadMore();
-      // Observe new projects after they're loaded
-      this.observeProjects();
-      console.log(
-        'Load more completed, new project count:',
-        this.indexer.projects().length
-      );
+      try {
+        this.isLoadingMore = true;
+        console.log('Executing load more');
+        await this.indexer.loadMore();
+        // Observe new projects after they're loaded
+        this.observeProjects();
+        console.log('Load more completed, new project count:', this.indexer.projects().length);
+      } finally {
+        this.isLoadingMore = false;
+        
+        // If there's a queued request, process it
+        if (this.loadMoreQueued) {
+          this.loadMoreQueued = false;
+          console.log('Processing queued load more request');
+          await this.loadMore();
+        }
+      }
     }
   }
 }

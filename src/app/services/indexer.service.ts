@@ -132,8 +132,6 @@ export class IndexerService {
   }
 
   async fetchProjects(reset = false): Promise<void> {
-    console.log('FETCH PROJECTS');
-
     if (reset) {
       this.offset = -1000;
       this.totalProjectsFetched = false;
@@ -162,14 +160,6 @@ export class IndexerService {
         this.totalProjectsFetched = true;
       }
 
-      // if (this.offset !== -1) {
-      //   // For the last page, we need to make sure we don't fetch more than the offset.
-      //   if (this.offset < limit) {
-      //     console.log('OFFSET LOWER THAN LIMIT!!', this.offset, limit);
-      //     limit = this.offset;
-      //   }
-      // }
-
       const params = new URLSearchParams();
       params.append('limit', limit.toString());
 
@@ -187,7 +177,7 @@ export class IndexerService {
       >(url);
 
       if (Array.isArray(response) && response.length > 0) {
-        console.log('Offset:', this.offset);
+        // console.log('Offset:', this.offset);
 
         if (this.offset === -1000) {
           this.totalItems = parseInt(headers.get('pagination-total') || '0');
@@ -198,36 +188,6 @@ export class IndexerService {
           const nextOffset = this.offset - this.LIMIT;
           // this.offset = Math.max(0, nextOffset);
           this.offset = nextOffset;
-
-          console.log('Next offset:', nextOffset);
-          console.log('Current offset:', this.offset);
-
-          // If the next offset is negative, substract that from the limit.
-          if (nextOffset < 0) {
-          }
-
-          // Happens on the last page. We've reached the end.
-          // if (response.length < limit) {
-          //   console.log('LIMIT REACHED!', response.length, limit);
-          //   this.totalProjectsFetched = true;
-          // }
-
-          // if (this.offset < 0) {
-          //   this.offset = 0;
-          // }
-
-          // Make the offset go negative
-          // if (this.offset < this.LIMIT - this.LIMIT) {
-          //   this.totalProjectsFetched = true;
-          // }
-
-          // Check if this was the last page we needed to load
-          // We've reached the end when we've loaded all items from 0 to totalItems
-          // const currentPosition = this.offset;
-          // if (currentPosition === 0) {
-          //   this.totalProjectsFetched = true;
-          //   console.log('Total projects fetched:', this.totalProjectsFetched);
-          // }
         }
 
         this.projects.update((existing) => [...existing, ...response]);
@@ -250,8 +210,6 @@ export class IndexerService {
   }
 
   async getProjects() {
-    console.log('GET PROJECTS:');
-
     try {
       // Initial request to get total count
       const response = await fetch(
@@ -333,7 +291,7 @@ export class IndexerService {
     try {
       this.loading.set(true);
       const url = `${this.indexerUrl}api/query/Angor/projects/${id}/stats`;
-      console.log('Fetching project stats:', url);
+      // console.log('Fetching project stats:', url);
 
       return (await this.fetchJson<ProjectStats>(url)).data;
     } catch (err) {
