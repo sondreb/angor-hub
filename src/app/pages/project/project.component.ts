@@ -191,7 +191,7 @@ import { RelayService } from '../../services/relay.service';
       .project-grid {
         display: grid;
         gap: 2rem;
-        margin: 2rem 0;
+        margin: 2rem 2rem;
       }
 
       .project-header {
