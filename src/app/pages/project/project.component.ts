@@ -78,12 +78,18 @@ import { RelayService } from '../../services/relay.service';
           <h1>{{ project()?.metadata?.name || projectId }}</h1>
           <p class="project-about">{{ project()?.metadata?.about }}</p>
           @if (project()?.details?.nostrPubKey) {
-          <a
+          Open in: <a
             [href]="'https://primal.net/p/' + project()?.details?.nostrPubKey"
             target="_blank"
             class="primal-link"
           >
             Primal
+          </a>, <a
+            [href]="'https://notes.blockcore.net/p/' + project()?.details?.nostrPubKey"
+            target="_blank"
+            class="primal-link"
+          >
+            Notes
           </a>
           }
         </div>
@@ -492,7 +498,7 @@ import { RelayService } from '../../services/relay.service';
         background-size: cover;
         background-position: center;
         background-color: rgba(0, 0, 0, 0.1);
-        border-radius: 12px 12px 0 0;
+        border-radius: 12px;
       }
 
       .faq-tab,
