@@ -38,7 +38,7 @@ export class RelayService {
   private pool = new SimplePool();
   private ndk: NDK | null = null;
   private isConnected = false;
-  private relayUrls = [
+  public relayUrls = [
     'wss://relay.primal.net',
     'wss://nos.lol',
     'wss://relay.angor.io',

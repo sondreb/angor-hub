@@ -8,6 +8,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { BreadcrumbComponent } from '../../components/breadcrumb.component';
 import { RelayService } from '../../services/relay.service';
+import NDK, { NDKUser } from '@nostr-dev-kit/ndk';
 
 @Component({
   selector: 'app-project',
@@ -77,20 +78,35 @@ import { RelayService } from '../../services/relay.service';
         <div class="project-title-content">
           <h1>{{ project()?.metadata?.name || projectId }}</h1>
           <p class="project-about">{{ project()?.metadata?.about }}</p>
-          @if (project()?.details?.nostrPubKey) {
-          Open in: <a
-            [href]="'https://primal.net/p/' + project()?.details?.nostrPubKey"
+          @if (project()?.details?.nostrPubKey) { Open in:
+          <a
+            [href]="'https://primal.net/p/' + user?.npub"
             target="_blank"
             class="primal-link"
           >
-            Primal
-          </a>, <a
-            [href]="'https://notes.blockcore.net/p/' + project()?.details?.nostrPubKey"
+            Primal </a
+          >,
+          <a
+            [href]="
+              'https://notes.blockcore.net/p/' + user?.npub
+            "
             target="_blank"
             class="primal-link"
           >
             Notes
+          </a>,
+          <a
+            [href]="
+              'https://njump.me/' + user?.npub
+            "
+            target="_blank"
+            class="primal-link"
+          >
+          njump
           </a>
+
+
+          
           }
         </div>
       </div>
@@ -164,9 +180,9 @@ import { RelayService } from '../../services/relay.service';
                 </div>
                 <div class="info-item">
                   <label>Nostr Public Key</label>
-                  <span class="ellipsis">{{
-                    project()?.details?.nostrPubKey
-                  }}</span>
+                  <span class="ellipsis">
+                    {{ user?.npub }}
+                  </span>
                 </div>
               </div>
               <div class="info-grid">
@@ -582,6 +598,8 @@ export class ProjectComponent implements OnInit, OnDestroy {
     }
   }
 
+  user: NDKUser | undefined;
+
   async ngOnInit() {
     window.scrollTo(0, 0);
 
@@ -619,6 +637,12 @@ export class ProjectComponent implements OnInit, OnDestroy {
           // Go fetch data.
           this.relay.fetchData([projectData.nostrEventId]);
           // Go get the details data.
+        } else {
+          this.user = new NDKUser({
+            pubkey: projectData.details.nostrPubKey,
+            relayUrls: this.relay.relayUrls,
+          });
+          console.log('User:', this.user);
         }
 
         // if (!projectData.metadata) {
@@ -631,6 +655,13 @@ export class ProjectComponent implements OnInit, OnDestroy {
           // If we get data from relay, make sure the ID is the same then set the details.
           if (details.projectIdentifier == id) {
             projectData.details = details;
+
+            // As soon as we have details, make an NDKUser instance
+            this.user = new NDKUser({
+              pubkey: projectData.details.nostrPubKey,
+              relayUrls: this.relay.relayUrls,
+            });
+            console.log('User:', this.user);
 
             // Go fetch the profile
             this.relay.fetchProfile([details.nostrPubKey]);
@@ -691,4 +722,14 @@ export class ProjectComponent implements OnInit, OnDestroy {
       day: 'numeric',
     });
   }
+
+  // convertToNpub(pubkey: string | undefined): string {
+  //   if (!pubkey) return 'N/A';
+  //   try {
+  //     return nip19.npubEncode(pubkey);
+  //   } catch (error) {
+  //     console.error('Error converting to npub:', error);
+  //     return pubkey;
+  //   }
+  // }
 }
