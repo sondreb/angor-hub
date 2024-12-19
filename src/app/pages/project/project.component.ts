@@ -140,15 +140,15 @@ import NDK, { NDKUser } from '@nostr-dev-kit/ndk';
               </div>
               <div class="stat-card">
                 <div class="stat-value">
-                  {{ project()?.stats?.amountSpentSoFarByFounder }}
+                  {{ (project()?.stats?.amountSpentSoFarByFounder ?? 0) / 100000000 }} BTC
                 </div>
-                <div class="stat-label">Amount Spent (sats)</div>
+                <div class="stat-label">Amount Spent</div>
               </div>
               <div class="stat-card">
                 <div class="stat-value">
-                  {{ project()?.stats?.amountInPenalties }}
+                  {{ (project()?.stats?.amountInPenalties ?? 0) / 100000000 }} BTC
                 </div>
-                <div class="stat-label">Penalties Amount (sats)</div>
+                <div class="stat-label">Penalties Amount</div>
               </div>
               <div class="stat-card">
                 <div class="stat-value">
@@ -365,6 +365,10 @@ import NDK, { NDKUser } from '@nostr-dev-kit/ndk';
         border-radius: 8px;
       }
 
+      .info-item span {
+        font-weight: 700;
+      }
+
       .info-item label {
         display: block;
         font-size: 0.9rem;
@@ -488,18 +492,47 @@ import NDK, { NDKUser } from '@nostr-dev-kit/ndk';
       .update-card,
       .comment-card {
         background: var(--surface-card);
-        padding: 1.5rem;
-        margin-bottom: 1rem;
-        border-radius: 8px;
+        padding: 2rem;
+        margin-bottom: 1.5rem;
+        border-radius: 12px;
+        border: 1px solid var(--border);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+      }
+
+      .update-card:hover,
+      .comment-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
       }
 
       .update-header,
       .comment-header {
         display: flex;
         justify-content: space-between;
-        margin-bottom: 1rem;
+        align-items: center;
+        margin-bottom: 1.5rem;
+        padding-bottom: 1rem;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .update-date,
+      .comment-date {
         font-size: 0.9rem;
         color: var(--text-color-secondary);
+      }
+
+      .comment-author {
+        font-weight: 600;
+        color: var(--primary-color);
+      }
+
+      .update-content,
+      .comment-content {
+        font-size: 1.1rem;
+        line-height: 1.6;
+        color: var(--text);
+        white-space: pre-wrap;
       }
 
       .loading {
