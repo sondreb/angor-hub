@@ -150,13 +150,9 @@ export class IndexerService {
 
       // If the next offset is negative, substract that from the limit.
       if (this.offset !== -1000 && this.offset < 0) {
-        // If offset is -1, this would result in 5.
         limit = this.LIMIT + this.offset;
         console.log('LIMIT SUBSTRACTED:', limit);
-
-        // Also reset the offset to 0 to get last page.
         this.offset = 0;
-
         this.totalProjectsFetched = true;
       }
 
@@ -167,30 +163,31 @@ export class IndexerService {
         params.append('offset', this.offset.toString());
       }
 
-      const url = `${
-        this.indexerUrl
-      }api/query/Angor/projects?${params.toString()}`;
+      const url = `${this.indexerUrl}api/query/Angor/projects?${params.toString()}`;
       console.log('Fetching:', url);
 
-      const { data: response, headers } = await this.fetchJson<
-        IndexedProject[]
-      >(url);
+      const { data: response, headers } = await this.fetchJson<IndexedProject[]>(url);
 
       if (Array.isArray(response) && response.length > 0) {
-        // console.log('Offset:', this.offset);
-
         if (this.offset === -1000) {
           this.totalItems = parseInt(headers.get('pagination-total') || '0');
-          // Calculate the starting offset from the end
           this.offset = Math.max(0, this.totalItems - limit - limit);
         } else {
-          // Move backwards for next fetch
           const nextOffset = this.offset - this.LIMIT;
-          // this.offset = Math.max(0, nextOffset);
           this.offset = nextOffset;
         }
 
-        this.projects.update((existing) => [...existing, ...response]);
+        // Merge new projects with existing ones, avoiding duplicates
+        this.projects.update((existing) => {
+          const merged = [...existing];
+          response.forEach(newProject => {
+            const existingIndex = merged.findIndex(p => p.projectIdentifier === newProject.projectIdentifier);
+            if (existingIndex === -1) {
+              merged.push(newProject);
+            }
+          });
+          return merged;
+        });
 
         const eventIds = response.map((project) => project.nostrEventId);
 
@@ -201,9 +198,7 @@ export class IndexerService {
         this.totalProjectsFetched = true;
       }
     } catch (err) {
-      this.error.set(
-        err instanceof Error ? err.message : 'Failed to fetch projects'
-      );
+      this.error.set(err instanceof Error ? err.message : 'Failed to fetch projects');
     } finally {
       this.loading.set(false);
     }
