@@ -64,95 +64,144 @@ import { RelayService } from '../../services/relay.service';
         </div>
       </div>
 
-      <div class="project-grid">
-        <!-- Project Statistics -->
-        <section class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-value">{{ project()?.stats?.investorCount }}</div>
-            <div class="stat-label">Total Investors</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value">{{ (project()?.stats?.amountInvested ?? 0) / 100000000 }} BTC</div>
-            <div class="stat-label">Total Invested</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value">
-              {{ project()?.stats?.amountSpentSoFarByFounder }}
-            </div>
-            <div class="stat-label">Amount Spent (sats)</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value">
-              {{ project()?.stats?.amountInPenalties }}
-            </div>
-            <div class="stat-label">Penalties Amount (sats)</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value">
-              {{ project()?.stats?.countInPenalties }}
-            </div>
-            <div class="stat-label">Penalties Count</div>
-          </div>
-        </section>
+      <div class="tabs">
+        <button 
+          *ngFor="let tab of tabs" 
+          [class.active]="activeTab === tab.id"
+          (click)="setActiveTab(tab.id)">
+          {{ tab.label }}
+        </button>
+      </div>
 
-        <!-- Project Details -->
-        <section class="project-details">
-          <h2>Project Details</h2>
-          <div class="info-stack">
-            <div class="info-item">
-              <label>Project ID</label>
-              <span class="ellipsis">{{ project()?.projectIdentifier }}</span>
-            </div>
-            <div class="info-item">
-              <label>Founder Key</label>
-              <span class="ellipsis">{{ project()?.founderKey }}</span>
-            </div>
-            <div class="info-item">
-              <label>Recovery Key</label>
-              <span class="ellipsis">{{
-                project()?.details?.founderRecoveryKey
-              }}</span>
-            </div>
-            <div class="info-item">
-              <label>Nostr Public Key</label>
-              <span class="ellipsis">{{
-                project()?.details?.nostrPubKey
-              }}</span>
-            </div>
-          </div>
-          <div class="info-grid">
-            <div class="info-item">
-              <label>Target Amount</label>
-              <span>{{ project()?.details?.targetAmount }} BTC</span>
-            </div>
-            <div class="info-item">
-              <label>Penalty Days</label>
-              <span>{{ project()?.details?.penaltyDays }} days</span>
-            </div>
-            <div class="info-item">
-              <label>Start Date</label>
-              <span>{{ formatDate(project()?.details?.startDate) }}</span>
-            </div>
-            <div class="info-item">
-              <label>Expiry Date</label>
-              <span>{{ formatDate(project()?.details?.expiryDate) }}</span>
-            </div>
-          </div>
-        </section>
+      <div class="tab-content" [ngSwitch]="activeTab">
+        <div *ngSwitchCase="'project'">
+          <div class="project-grid">
+            <!-- Project Statistics -->
+            <section class="stats-grid">
+              <div class="stat-card">
+                <div class="stat-value">{{ project()?.stats?.investorCount }}</div>
+                <div class="stat-label">Total Investors</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value">{{ (project()?.stats?.amountInvested ?? 0) / 100000000 }} BTC</div>
+                <div class="stat-label">Total Invested</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value">
+                  {{ project()?.stats?.amountSpentSoFarByFounder }}
+                </div>
+                <div class="stat-label">Amount Spent (sats)</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value">
+                  {{ project()?.stats?.amountInPenalties }}
+                </div>
+                <div class="stat-label">Penalties Amount (sats)</div>
+              </div>
+              <div class="stat-card">
+                <div class="stat-value">
+                  {{ project()?.stats?.countInPenalties }}
+                </div>
+                <div class="stat-label">Penalties Count</div>
+              </div>
+            </section>
 
-        <!-- Funding Stages -->
-        <section class="funding-stages">
-          <h2>Funding Stages</h2>
-          <div class="stages-timeline">
-            @for (stage of project()?.details?.stages; track $index) {
-            <div class="stage-card">
-              <div class="stage-number">Stage {{ $index + 1 }}</div>
-              <div class="stage-amount">{{ stage.amountToRelease }}%</div>
-              <div class="stage-date">{{ formatDate(stage.releaseDate) }}</div>
-            </div>
-            }
+            <!-- Project Details -->
+            <section class="project-details">
+              <h2>Project Details</h2>
+              <div class="info-stack">
+                <div class="info-item">
+                  <label>Project ID</label>
+                  <span class="ellipsis">{{ project()?.projectIdentifier }}</span>
+                </div>
+                <div class="info-item">
+                  <label>Founder Key</label>
+                  <span class="ellipsis">{{ project()?.founderKey }}</span>
+                </div>
+                <div class="info-item">
+                  <label>Recovery Key</label>
+                  <span class="ellipsis">{{
+                    project()?.details?.founderRecoveryKey
+                  }}</span>
+                </div>
+                <div class="info-item">
+                  <label>Nostr Public Key</label>
+                  <span class="ellipsis">{{
+                    project()?.details?.nostrPubKey
+                  }}</span>
+                </div>
+              </div>
+              <div class="info-grid">
+                <div class="info-item">
+                  <label>Target Amount</label>
+                  <span>{{ project()?.details?.targetAmount }} BTC</span>
+                </div>
+                <div class="info-item">
+                  <label>Penalty Days</label>
+                  <span>{{ project()?.details?.penaltyDays }} days</span>
+                </div>
+                <div class="info-item">
+                  <label>Start Date</label>
+                  <span>{{ formatDate(project()?.details?.startDate) }}</span>
+                </div>
+                <div class="info-item">
+                  <label>Expiry Date</label>
+                  <span>{{ formatDate(project()?.details?.expiryDate) }}</span>
+                </div>
+              </div>
+            </section>
+
+            <!-- Funding Stages -->
+            <section class="funding-stages">
+              <h2>Funding Stages</h2>
+              <div class="stages-timeline">
+                @for (stage of project()?.details?.stages; track $index) {
+                <div class="stage-card">
+                  <div class="stage-number">Stage {{ $index + 1 }}</div>
+                  <div class="stage-amount">{{ stage.amountToRelease }}%</div>
+                  <div class="stage-date">{{ formatDate(stage.releaseDate) }}</div>
+                </div>
+                }
+              </div>
+            </section>
           </div>
-        </section>
+        </div>
+
+        <div *ngSwitchCase="'faq'" class="faq-tab">
+          <h2>Frequently Asked Questions</h2>
+          <p>No FAQs available yet.</p>
+        </div>
+
+        <div *ngSwitchCase="'updates'" class="updates-tab">
+          <h2>Project Updates</h2>
+          @if (loading()) {
+            <div class="loading">Loading updates...</div>
+          }
+          @for (update of updates(); track update.id) {
+            <div class="update-card">
+              <div class="update-header">
+                <span class="update-date">{{ formatDate(update.created_at) }}</span>
+              </div>
+              <div class="update-content">{{ update.content }}</div>
+            </div>
+          }
+        </div>
+
+        <div *ngSwitchCase="'comments'" class="comments-tab">
+          <h2>Comments</h2>
+          @if (loading()) {
+            <div class="loading">Loading comments...</div>
+          }
+          @for (comment of comments(); track comment.id) {
+            <div class="comment-card">
+              <div class="comment-header">
+                <span class="comment-author">{{ comment.pubkey }}</span>
+                <span class="comment-date">{{ formatDate(comment.created_at) }}</span>
+              </div>
+              <div class="comment-content">{{ comment.content }}</div>
+            </div>
+          }
+        </div>
       </div>
       }
     </div>
@@ -339,6 +388,68 @@ import { RelayService } from '../../services/relay.service';
         text-overflow: ellipsis;
         white-space: nowrap;
       }
+
+      .tabs {
+        display: flex;
+        gap: 1rem;
+        margin: 2rem;
+        border-bottom: 1px solid var(--border);
+        padding-bottom: 0;
+      }
+
+      .tabs button {
+        background: none;
+        border: none;
+        padding: 0.75rem 1.5rem;
+        cursor: pointer;
+        color: var(--text);
+        font-size: 1rem;
+        position: relative;
+        transition: all 0.3s ease;
+        opacity: 0.7;
+      }
+
+      .tabs button:hover {
+        opacity: 1;
+        background: var(--background);
+      }
+
+      .tabs button.active {
+        color: var(--accent);
+        opacity: 1;
+      }
+
+      .tabs button.active::after {
+        content: '';
+        position: absolute;
+        bottom: -1px;
+        left: 0;
+        right: 0;
+        height: 2px;
+        background: var(--accent);
+        border-radius: 2px 2px 0 0;
+      }
+
+      .update-card, .comment-card {
+        background: var(--surface-card);
+        padding: 1.5rem;
+        margin-bottom: 1rem;
+        border-radius: 8px;
+      }
+
+      .update-header, .comment-header {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 1rem;
+        font-size: 0.9rem;
+        color: var(--text-color-secondary);
+      }
+
+      .loading {
+        text-align: center;
+        padding: 2rem;
+        color: var(--text-color-secondary);
+      }
     `,
   ],
 })
@@ -351,6 +462,69 @@ export class ProjectComponent implements OnInit, OnDestroy {
 
   project = signal<IndexedProject | null>(null);
   projectId: string = '';
+
+  tabs = [
+    { id: 'project', label: 'Project' },
+    { id: 'faq', label: 'FAQ' },
+    { id: 'updates', label: 'Updates' },
+    { id: 'comments', label: 'Comments' }
+  ];
+  activeTab = 'project';
+  updates = signal<any[]>([]);
+  comments = signal<any[]>([]);
+  loading = signal<boolean>(false);
+
+  setActiveTab(tabId: string) {
+    this.activeTab = tabId;
+    if (tabId === 'updates' && this.updates().length === 0) {
+      this.fetchUpdates();
+    }
+    if (tabId === 'comments' && this.comments().length === 0) {
+      this.fetchComments();
+    }
+  }
+
+  async fetchUpdates() {
+    if (!this.project()?.details?.nostrPubKey) return;
+
+    this.loading.set(true);
+    try {
+      const ndk = await this.relay.ensureConnected();
+      const filter = {
+        kinds: [1],
+        authors: [this.project()!.details!.nostrPubKey],
+        limit: 50,
+      };
+
+      const events = await ndk.fetchEvents(filter);
+      this.updates.set(Array.from(events));
+    } catch (error) {
+      console.error('Error fetching updates:', error);
+    } finally {
+      this.loading.set(false);
+    }
+  }
+
+  async fetchComments() {
+    if (!this.project()?.details?.nostrPubKey) return;
+
+    this.loading.set(true);
+    try {
+      const ndk = await this.relay.ensureConnected();
+      const filter = {
+        kinds: [1],
+        '#p': [this.project()!.details!.nostrPubKey],
+        limit: 50,
+      };
+
+      const events = await ndk.fetchEvents(filter);
+      this.comments.set(Array.from(events));
+    } catch (error) {
+      console.error('Error fetching comments:', error);
+    } finally {
+      this.loading.set(false);
+    }
+  }
 
   async ngOnInit() {
     window.scrollTo(0, 0);

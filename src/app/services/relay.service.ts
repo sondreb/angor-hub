@@ -62,7 +62,7 @@ export class RelayService {
     });
   }
 
-  private async ensureConnected(): Promise<NDK> {
+  public async ensureConnected(): Promise<NDK> {
     if (this.ndk && this.isConnected) {
       return this.ndk;
     }
