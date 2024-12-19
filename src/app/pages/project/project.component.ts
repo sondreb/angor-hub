@@ -497,6 +497,12 @@ import { RelayService } from '../../services/relay.service';
         background-color: rgba(0, 0, 0, 0.1);
         border-radius: 12px 12px 0 0;
       }
+
+      .faq-tab,
+      .updates-tab,
+      .comments-tab {
+        margin: 2rem;
+      }
     `,
   ],
 })
