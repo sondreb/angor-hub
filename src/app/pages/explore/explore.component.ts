@@ -68,6 +68,20 @@ import { AgoPipe } from '../../pipes/ato.pipe';
         margin: -1px; /* Compensate for any gap */
         padding: 1px; /* Ensure full coverage */
       }
+
+
+      .project-details-banner {
+      min-height: 400px;
+      // width: 100%;
+        // background-size: cover;
+        // background-position: center;
+        // background-color: rgba(0, 0, 0, 0.1);
+        // border-radius: 12px 12px 0 0;
+        // margin: -1px;
+        // padding: 1px;
+}
+
+
       .project-content {
         padding: 1.5rem; /* Increase padding in content area to compensate */
         position: relative;

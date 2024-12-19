@@ -14,6 +14,17 @@ import { RelayService } from '../../services/relay.service';
   standalone: true,
   imports: [CommonModule, BreadcrumbComponent],
   template: `
+    <!-- <app-breadcrumb
+      [items]="[
+        { label: 'Home', url: '/' },
+        { label: 'Explore', url: '/explore' },
+        { label: projectId, url: '' }
+      ]"
+    ></app-breadcrumb> -->
+
+    <!-- <section
+      class="hero"
+    >
     <app-breadcrumb
       [items]="[
         { label: 'Home', url: '/' },
@@ -22,14 +33,26 @@ import { RelayService } from '../../services/relay.service';
       ]"
     ></app-breadcrumb>
 
-    <section
-      class="hero"
-      [ngStyle]="{
-        'background-image': project()?.metadata?.banner
-          ? 'url(' + project()?.metadata?.banner + ')'
-          : 'none'
-      }"
-    >
+    </section> -->
+
+    <section class="hero">
+      <app-breadcrumb
+        [items]="[
+          { label: 'Home', url: '/' },
+          { label: 'Explore', url: '/explore' },
+          { label: projectId, url: '' }
+        ]"
+      ></app-breadcrumb>
+
+      <div
+        class="project-details-banner"
+        [ngStyle]="{
+          'background-image': project()?.metadata?.banner
+            ? 'url(' + project()?.metadata?.banner + ')'
+            : 'none'
+        }"
+      ></div>
+
       <div class="hero-wrapper">
         <div class="hero-content">
           @if (!project() && indexer.loading()) {
@@ -55,9 +78,11 @@ import { RelayService } from '../../services/relay.service';
           <h1>{{ project()?.metadata?.name || projectId }}</h1>
           <p class="project-about">{{ project()?.metadata?.about }}</p>
           @if (project()?.details?.nostrPubKey) {
-          <a [href]="'https://primal.net/p/' + project()?.details?.nostrPubKey" 
-             target="_blank" 
-             class="primal-link">
+          <a
+            [href]="'https://primal.net/p/' + project()?.details?.nostrPubKey"
+            target="_blank"
+            class="primal-link"
+          >
             Primal
           </a>
           }
@@ -65,10 +90,11 @@ import { RelayService } from '../../services/relay.service';
       </div>
 
       <div class="tabs">
-        <button 
-          *ngFor="let tab of tabs" 
+        <button
+          *ngFor="let tab of tabs"
           [class.active]="activeTab === tab.id"
-          (click)="setActiveTab(tab.id)">
+          (click)="setActiveTab(tab.id)"
+        >
           {{ tab.label }}
         </button>
       </div>
@@ -79,11 +105,15 @@ import { RelayService } from '../../services/relay.service';
             <!-- Project Statistics -->
             <section class="stats-grid">
               <div class="stat-card">
-                <div class="stat-value">{{ project()?.stats?.investorCount }}</div>
+                <div class="stat-value">
+                  {{ project()?.stats?.investorCount }}
+                </div>
                 <div class="stat-label">Total Investors</div>
               </div>
               <div class="stat-card">
-                <div class="stat-value">{{ (project()?.stats?.amountInvested ?? 0) / 100000000 }} BTC</div>
+                <div class="stat-value">
+                  {{ (project()?.stats?.amountInvested ?? 0) / 100000000 }} BTC
+                </div>
                 <div class="stat-label">Total Invested</div>
               </div>
               <div class="stat-card">
@@ -112,7 +142,9 @@ import { RelayService } from '../../services/relay.service';
               <div class="info-stack">
                 <div class="info-item">
                   <label>Project ID</label>
-                  <span class="ellipsis">{{ project()?.projectIdentifier }}</span>
+                  <span class="ellipsis">{{
+                    project()?.projectIdentifier
+                  }}</span>
                 </div>
                 <div class="info-item">
                   <label>Founder Key</label>
@@ -159,7 +191,9 @@ import { RelayService } from '../../services/relay.service';
                 <div class="stage-card">
                   <div class="stage-number">Stage {{ $index + 1 }}</div>
                   <div class="stage-amount">{{ stage.amountToRelease }}%</div>
-                  <div class="stage-date">{{ formatDate(stage.releaseDate) }}</div>
+                  <div class="stage-date">
+                    {{ formatDate(stage.releaseDate) }}
+                  </div>
                 </div>
                 }
               </div>
@@ -175,31 +209,33 @@ import { RelayService } from '../../services/relay.service';
         <div *ngSwitchCase="'updates'" class="updates-tab">
           <h2>Project Updates</h2>
           @if (loading()) {
-            <div class="loading">Loading updates...</div>
-          }
-          @for (update of updates(); track update.id) {
-            <div class="update-card">
-              <div class="update-header">
-                <span class="update-date">{{ formatDate(update.created_at) }}</span>
-              </div>
-              <div class="update-content">{{ update.content }}</div>
+          <div class="loading">Loading updates...</div>
+          } @for (update of updates(); track update.id) {
+          <div class="update-card">
+            <div class="update-header">
+              <span class="update-date">{{
+                formatDate(update.created_at)
+              }}</span>
             </div>
+            <div class="update-content">{{ update.content }}</div>
+          </div>
           }
         </div>
 
         <div *ngSwitchCase="'comments'" class="comments-tab">
           <h2>Comments</h2>
           @if (loading()) {
-            <div class="loading">Loading comments...</div>
-          }
-          @for (comment of comments(); track comment.id) {
-            <div class="comment-card">
-              <div class="comment-header">
-                <span class="comment-author">{{ comment.pubkey }}</span>
-                <span class="comment-date">{{ formatDate(comment.created_at) }}</span>
-              </div>
-              <div class="comment-content">{{ comment.content }}</div>
+          <div class="loading">Loading comments...</div>
+          } @for (comment of comments(); track comment.id) {
+          <div class="comment-card">
+            <div class="comment-header">
+              <span class="comment-author">{{ comment.pubkey }}</span>
+              <span class="comment-date">{{
+                formatDate(comment.created_at)
+              }}</span>
             </div>
+            <div class="comment-content">{{ comment.content }}</div>
+          </div>
           }
         </div>
       </div>
@@ -430,14 +466,16 @@ import { RelayService } from '../../services/relay.service';
         border-radius: 2px 2px 0 0;
       }
 
-      .update-card, .comment-card {
+      .update-card,
+      .comment-card {
         background: var(--surface-card);
         padding: 1.5rem;
         margin-bottom: 1rem;
         border-radius: 8px;
       }
 
-      .update-header, .comment-header {
+      .update-header,
+      .comment-header {
         display: flex;
         justify-content: space-between;
         margin-bottom: 1rem;
@@ -449,6 +487,15 @@ import { RelayService } from '../../services/relay.service';
         text-align: center;
         padding: 2rem;
         color: var(--text-color-secondary);
+      }
+
+      .project-details-banner {
+        min-height: 170px;
+        width: 100%;
+        background-size: cover;
+        background-position: center;
+        background-color: rgba(0, 0, 0, 0.1);
+        border-radius: 12px 12px 0 0;
       }
     `,
   ],
@@ -467,7 +514,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
     { id: 'project', label: 'Project' },
     { id: 'faq', label: 'FAQ' },
     { id: 'updates', label: 'Updates' },
-    { id: 'comments', label: 'Comments' }
+    { id: 'comments', label: 'Comments' },
   ];
   activeTab = 'project';
   updates = signal<any[]>([]);
