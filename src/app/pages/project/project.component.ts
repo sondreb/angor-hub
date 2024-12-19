@@ -136,6 +136,8 @@ export class ProjectComponent implements OnInit, OnDestroy {
     let projectData: IndexedProject | null =
       this.indexer.getProject(id) || null;
 
+      console.log('PROJECT DATA:', projectData);
+
     if (!projectData) {
       const fetchedProject = await this.indexer.fetchProject(id);
       projectData = fetchedProject || null;
