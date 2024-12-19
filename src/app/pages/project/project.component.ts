@@ -7,6 +7,7 @@ import {
 } from '../../services/indexer.service';
 import { CommonModule } from '@angular/common';
 import { BreadcrumbComponent } from '../../components/breadcrumb.component';
+import { RelayService } from '../../services/relay.service';
 
 @Component({
   selector: 'app-project',
@@ -301,6 +302,8 @@ export class ProjectComponent implements OnInit, OnDestroy {
   private route = inject(ActivatedRoute);
   private router = inject(Router);
   indexer = inject(IndexerService);
+  private relay = inject(RelayService);
+  private subscriptions: { unsubscribe: () => void }[] = [];
 
   project = signal<IndexedProject | null>(null);
   stats = signal<ProjectStats | null>(null);
@@ -308,7 +311,6 @@ export class ProjectComponent implements OnInit, OnDestroy {
   loadingStats = false;
 
   async ngOnInit() {
-    // Scroll to top when component initializes
     window.scrollTo(0, 0);
 
     const id = this.route.snapshot.paramMap.get('id');
@@ -319,39 +321,72 @@ export class ProjectComponent implements OnInit, OnDestroy {
 
     this.projectId = id;
 
-    // Try to get from existing projects
-    let projectData: IndexedProject | null =
-      this.indexer.getProject(id) || null;
+    // 1. First try to get from existing projects cache
+    let projectData: any = this.indexer.getProject(id);
 
-      console.log('PROJECT DATA:', JSON.stringify(projectData));
-
-    if (!projectData) {
-      const fetchedProject = await this.indexer.fetchProject(id);
-      projectData = fetchedProject || null;
-    }
-
-    if (projectData) {
-      this.project.set(projectData);
-
-      // Fetch stats separately with its own loading state
-      this.loadingStats = true;
-      try {
-        const statsData = await this.indexer.fetchProjectStats(id);
-        this.stats.set(statsData);
-      } finally {
-        this.loadingStats = false;
+    try {
+      // 2. If not in cache, fetch from Indexer API
+      if (!projectData) {
+        projectData = await this.indexer.fetchProject(id);
       }
-    } else {
-      console.error('Project not found:', id);
+
+      if (projectData) {
+        // Set initial project data
+        this.project.set(projectData);
+
+        // 3. Subscribe to project updates from relay
+        const projectSub = this.relay.projectUpdates.subscribe(details => {
+          if (details.projectIdentifier === id) {
+            this.project.update(current => {
+              if (current) {
+                return { ...current, details };
+              }
+              return current;
+            });
+          }
+        });
+
+        // 4. Subscribe to profile updates from relay
+        const profileSub = this.relay.profileUpdates.subscribe(update => {
+          if (projectData?.details?.nostrPubKey === update.pubkey) {
+            this.project.update(current => {
+              if (current) {
+                return { ...current, metadata: update.profile };
+              }
+              return current;
+            });
+          }
+        });
+
+        this.subscriptions.push(projectSub, profileSub);
+
+        // 5. Fetch project details from relay
+        if (projectData.nostrEventId) {
+          await this.relay.fetchData([projectData.nostrEventId]);
+        }
+
+        // 6. Fetch project stats
+        this.loadingStats = true;
+        try {
+          const statsData = await this.indexer.fetchProjectStats(id);
+          this.stats.set(statsData);
+        } finally {
+          this.loadingStats = false;
+        }
+      }
+    } catch (error) {
+      console.error('Error loading project:', error);
     }
   }
 
   ngOnDestroy() {
-    // Clear signals to prevent stale data
+    // Clean up subscriptions
+    this.subscriptions.forEach(sub => sub.unsubscribe());
+    this.subscriptions = [];
+    
+    // Clear signals
     this.project.set(null);
     this.stats.set(null);
-    
-    // Reset loading state
     this.loadingStats = false;
   }
 
