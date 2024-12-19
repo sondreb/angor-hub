@@ -54,6 +54,13 @@ import { RelayService } from '../../services/relay.service';
         <div class="project-title-content">
           <h1>{{ project()?.metadata?.name || projectId }}</h1>
           <p class="project-about">{{ project()?.metadata?.about }}</p>
+          @if (project()?.details?.nostrPubKey) {
+          <a [href]="'https://primal.net/p/' + project()?.details?.nostrPubKey" 
+             target="_blank" 
+             class="primal-link">
+            Primal
+          </a>
+          }
         </div>
       </div>
 
@@ -65,8 +72,8 @@ import { RelayService } from '../../services/relay.service';
             <div class="stat-label">Total Investors</div>
           </div>
           <div class="stat-card">
-            <div class="stat-value">{{ project()?.stats?.amountInvested }}</div>
-            <div class="stat-label">Total Invested (sats)</div>
+            <div class="stat-value">{{ (project()?.stats?.amountInvested ?? 0) / 100000000 }} BTC</div>
+            <div class="stat-label">Total Invested</div>
           </div>
           <div class="stat-card">
             <div class="stat-value">
@@ -116,7 +123,7 @@ import { RelayService } from '../../services/relay.service';
           <div class="info-grid">
             <div class="info-item">
               <label>Target Amount</label>
-              <span>{{ project()?.details?.targetAmount }} sats</span>
+              <span>{{ project()?.details?.targetAmount }} BTC</span>
             </div>
             <div class="info-item">
               <label>Penalty Days</label>
@@ -140,7 +147,7 @@ import { RelayService } from '../../services/relay.service';
             @for (stage of project()?.details?.stages; track $index) {
             <div class="stage-card">
               <div class="stage-number">Stage {{ $index + 1 }}</div>
-              <div class="stage-amount">{{ stage.amountToRelease }} sats</div>
+              <div class="stage-amount">{{ stage.amountToRelease }}%</div>
               <div class="stage-date">{{ formatDate(stage.releaseDate) }}</div>
             </div>
             }
@@ -224,6 +231,18 @@ import { RelayService } from '../../services/relay.service';
         font-size: 1.1rem;
         color: var(--text);
         opacity: 0.8;
+        margin-bottom: 1rem;
+      }
+
+      .primal-link {
+        display: inline-block;
+        color: var(--primary-color);
+        text-decoration: none;
+        font-size: 0.9rem;
+      }
+
+      .primal-link:hover {
+        text-decoration: underline;
       }
 
       .info-grid {
