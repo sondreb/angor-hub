@@ -13,61 +13,115 @@ import { BreadcrumbComponent } from '../../components/breadcrumb.component';
   standalone: true,
   imports: [CommonModule, BreadcrumbComponent],
   template: `
-    <section class="hero">
-
     <app-breadcrumb [items]="[
       { label: 'Home', url: '/' },
       { label: 'Explore', url: '/explore' },
       { label: projectId, url: '' }
     ]"></app-breadcrumb>
 
+    <section class="hero" [ngStyle]="{'background-image': project()?.metadata?.banner ? 'url(' + project()?.metadata?.banner + ')' : 'none'}">
       <div class="hero-wrapper">
         <div class="hero-content">
-          @if (project()) {
-            <strong>Project Details</strong>
-            <h1 class="hero-subtitle">{{ projectId }}</h1>
-            <div class="hero-stats">
-              <span class="hero-stat">Created on block: {{ project()?.createdOnBlock }}</span>
-              <span class="hero-stat">Founder: {{ project()?.founderKey }}</span>
-            </div>
-          } @else if (indexer.loading()) {
+          @if (!project() && indexer.loading()) {
             <div class="loading-spinner">
               <div class="spinner"></div>
             </div>
-          } @else {
-            <p class="hero-description">Project details could not be found.</p>
           }
         </div>
       </div>
     </section>
 
     <div class="container">
-      @if (project() && stats()) {
-        <section class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-value">{{ stats()?.investorCount }}</div>
-            <div class="stat-label">Total Investors</div>
+      @if (project()) {
+        <div class="project-header">
+          @if (project()?.metadata?.['picture']) {
+            <img [src]="project()?.metadata?.['picture']" class="project-logo" alt="Project logo">
+          }
+          <div class="project-title-content">
+            <h1>{{ project()?.metadata?.name || projectId }}</h1>
+            <p class="project-about">{{ project()?.metadata?.about }}</p>
           </div>
-          <div class="stat-card">
-            <div class="stat-value">{{ stats()?.amountInvested }}</div>
-            <div class="stat-label">Total Invested (sats)</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value">{{ stats()?.amountSpentSoFarByFounder }}</div>
-            <div class="stat-label">Amount Spent (sats)</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value">{{ stats()?.amountInPenalties }}</div>
-            <div class="stat-label">Penalties Amount (sats)</div>
-          </div>
-          <div class="stat-card">
-            <div class="stat-value">{{ stats()?.countInPenalties }}</div>
-            <div class="stat-label">Penalties Count</div>
-          </div>
-        </section>
-      } @else if (loadingStats) {
-        <div class="loading-spinner">
-          <div class="spinner"></div>
+        </div>
+
+        <div class="project-grid">
+          <!-- Project Statistics -->
+          <section class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-value">{{ stats()?.investorCount }}</div>
+              <div class="stat-label">Total Investors</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">{{ stats()?.amountInvested }}</div>
+              <div class="stat-label">Total Invested (sats)</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">{{ stats()?.amountSpentSoFarByFounder }}</div>
+              <div class="stat-label">Amount Spent (sats)</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">{{ stats()?.amountInPenalties }}</div>
+              <div class="stat-label">Penalties Amount (sats)</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-value">{{ stats()?.countInPenalties }}</div>
+              <div class="stat-label">Penalties Count</div>
+            </div>
+          </section>
+
+          <!-- Project Details -->
+          <section class="project-details">
+            <h2>Project Details</h2>
+            <div class="info-stack">
+              <div class="info-item">
+                <label>Project ID</label>
+                <span class="ellipsis">{{ project()?.projectIdentifier }}</span>
+              </div>
+              <div class="info-item">
+                <label>Founder Key</label>
+                <span class="ellipsis">{{ project()?.founderKey }}</span>
+              </div>
+              <div class="info-item">
+                <label>Recovery Key</label>
+                <span class="ellipsis">{{ project()?.details?.founderRecoveryKey }}</span>
+              </div>
+              <div class="info-item">
+                <label>Nostr Public Key</label>
+                <span class="ellipsis">{{ project()?.details?.nostrPubKey }}</span>
+              </div>
+            </div>
+            <div class="info-grid">
+              <div class="info-item">
+                <label>Target Amount</label>
+                <span>{{ project()?.details?.targetAmount }} sats</span>
+              </div>
+              <div class="info-item">
+                <label>Penalty Days</label>
+                <span>{{ project()?.details?.penaltyDays }} days</span>
+              </div>
+              <div class="info-item">
+                <label>Start Date</label>
+                <span>{{ formatDate(project()?.details?.startDate) }}</span>
+              </div>
+              <div class="info-item">
+                <label>Expiry Date</label>
+                <span>{{ formatDate(project()?.details?.expiryDate) }}</span>
+              </div>
+            </div>
+          </section>
+
+          <!-- Funding Stages -->
+          <section class="funding-stages">
+            <h2>Funding Stages</h2>
+            <div class="stages-timeline">
+              @for (stage of project()?.details?.stages; track $index) {
+                <div class="stage-card">
+                  <div class="stage-number">Stage {{ $index + 1 }}</div>
+                  <div class="stage-amount">{{ stage.amountToRelease }} sats</div>
+                  <div class="stage-date">{{ formatDate(stage.releaseDate) }}</div>
+                </div>
+              }
+            </div>
+          </section>
         </div>
       }
     </div>
@@ -108,6 +162,139 @@ import { BreadcrumbComponent } from '../../components/breadcrumb.component';
       font-size: 0.9rem;
       opacity: 0.8;
     }
+
+    .project-grid {
+      display: grid;
+      gap: 2rem;
+      margin: 2rem 0;
+    }
+
+    .project-header {
+      display: flex;
+      align-items: flex-start;
+      gap: 2rem;
+      margin: 2rem 0;
+      padding: 0 1rem;
+    }
+
+    .project-logo {
+      width: 100px;
+      height: 100px;
+      border-radius: 50%;
+      object-fit: cover;
+      border: 3px solid var(--border);
+    }
+
+    .project-title-content {
+      flex: 1;
+    }
+
+    .project-title-content h1 {
+      margin: 0 0 1rem 0;
+      font-size: 2rem;
+    }
+
+    .project-about {
+      margin: 0;
+      font-size: 1.1rem;
+      color: var(--text);
+      opacity: 0.8;
+    }
+
+    .info-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1rem;
+    }
+
+    .info-item {
+      background: var(--surface-card);
+      padding: 1rem;
+      border-radius: 8px;
+    }
+
+    .info-item label {
+      display: block;
+      font-size: 0.9rem;
+      color: var(--text-color-secondary);
+      margin-bottom: 0.5rem;
+    }
+
+    .ellipsis {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .stages-timeline {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    .stage-card {
+      background: var(--surface-card);
+      padding: 1.5rem;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .stage-number {
+      font-weight: bold;
+      color: var(--primary-color);
+      margin-bottom: 0.5rem;
+    }
+
+    .stage-amount {
+      font-size: 1.25rem;
+      font-weight: bold;
+      margin-bottom: 0.5rem;
+    }
+
+    .stage-date {
+      font-size: 0.9rem;
+      color: var(--text-color-secondary);
+    }
+
+    .hero {
+      height: 200px;
+      background-size: cover;
+      background-position: center;
+      margin-bottom: 2rem;
+    }
+
+    .info-stack {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      margin-bottom: 2rem;
+    }
+
+    .info-stack .info-item {
+      background: var(--background);
+      border: 1px solid var(--border);
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+    }
+
+    .info-stack .info-item label {
+      display: block;
+      font-size: 0.8rem;
+      color: var(--text);
+      opacity: 0.7;
+      margin-bottom: 0.25rem;
+    }
+
+    .info-stack .info-item span {
+      display: block;
+      font-family: monospace;
+      font-size: 0.9rem;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
   `],
 })
 export class ProjectComponent implements OnInit, OnDestroy {
@@ -136,7 +323,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
     let projectData: IndexedProject | null =
       this.indexer.getProject(id) || null;
 
-      console.log('PROJECT DATA:', projectData);
+      console.log('PROJECT DATA:', JSON.stringify(projectData));
 
     if (!projectData) {
       const fetchedProject = await this.indexer.fetchProject(id);
@@ -166,5 +353,14 @@ export class ProjectComponent implements OnInit, OnDestroy {
     
     // Reset loading state
     this.loadingStats = false;
+  }
+
+  formatDate(timestamp: number | undefined): string {
+    if (!timestamp) return 'N/A';
+    return new Date(timestamp * 1000).toLocaleDateString('en-US', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric'
+    });
   }
 }
