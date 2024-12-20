@@ -66,6 +66,22 @@ import { AgoPipe } from '../../pipes/ato.pipe';
       </div>
     </section>
 
+    <!-- Add new mobile invest button here -->
+    <div class="mobile-invest-button-container">
+      <button 
+        class="invest-button" 
+        [disabled]="isProjectNotStarted()"
+        [class.disabled]="isProjectNotStarted()"
+        (click)="!isProjectNotStarted() && openInvestWindow()"
+      >
+        @if (isProjectNotStarted()) {
+          Starts {{ (project()?.details?.startDate ?? 0) | ago }}
+        } @else {
+          Invest Now
+        }
+      </button>
+    </div>
+
     <div class="container">
       @if (project()) {
       <div class="project-header">
@@ -700,6 +716,33 @@ import { AgoPipe } from '../../pipes/ato.pipe';
         color: var(--text-color-secondary);
         cursor: not-allowed;
         font-size: 1rem;
+      }
+
+      .mobile-invest-button-container {
+        display: none;
+        padding: 1rem 2rem;
+        margin-top: -1rem;
+      }
+
+      @media (max-width: 768px) {
+        .mobile-invest-button-container {
+          display: block;
+          padding: 1rem;
+          margin: 1rem 0;
+        }
+
+        .mobile-invest-button-container .invest-button {
+          width: 100%;
+          min-width: unset;
+        }
+
+        .invest-button-container {
+          display: none;
+        }
+
+        .project-header {
+          margin: 1rem;
+        }
       }
     `,
   ],
