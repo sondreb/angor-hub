@@ -163,17 +163,17 @@ import { AgoPipe } from '../../pipes/ato.pipe';
                 </div>
                 <div class="stat-label">Total Investors</div>
               </div>
-              <div class="stat-card spending-card" [style.--spent-percentage]="((project()?.stats?.amountSpentSoFarByFounder ?? 0) / (project()?.stats?.amountInvested ?? 1)) * 100 + '%'">
+              <div class="stat-card spending-card" [style.--spent-percentage]="getSpentPercentage()">
                 <div class="stat-value">
                   {{ (project()?.stats?.amountSpentSoFarByFounder ?? 0) / 100000000 }} BTC
                 </div>
-                <div class="stat-label">Spent ({{ ((project()?.stats?.amountSpentSoFarByFounder ?? 0) / (project()?.stats?.amountInvested ?? 1) * 100).toFixed(1) }}%)</div>
+                <div class="stat-label">Spent ({{ getSpentPercentage() }}%)</div>
               </div>
-              <div class="stat-card penalties-card" [style.--penalties-percentage]="((project()?.stats?.amountInPenalties ?? 0) / (project()?.stats?.amountInvested ?? 1)) * 100 + '%'">
+              <div class="stat-card penalties-card" [style.--penalties-percentage]="getPenaltiesPercentage()">
                 <div class="stat-value">
                   {{ (project()?.stats?.amountInPenalties ?? 0) / 100000000 }} BTC
                 </div>
-                <div class="stat-label">Penalties ({{ ((project()?.stats?.amountInPenalties ?? 0) / (project()?.stats?.amountInvested ?? 1) * 100).toFixed(1) }}%)</div>
+                <div class="stat-label">Penalties ({{ getPenaltiesPercentage() }}%)</div>
               </div>
               <div class="stat-card">
                 <div class="stat-value">
@@ -912,13 +912,17 @@ export class ProjectComponent implements OnInit, OnDestroy {
     window.open(url, '_blank');
   }
 
-  // convertToNpub(pubkey: string | undefined): string {
-  //   if (!pubkey) return 'N/A';
-  //   try {
-  //     return nip19.npubEncode(pubkey);
-  //   } catch (error) {
-  //     console.error('Error converting to npub:', error);
-  //     return pubkey;
-  //   }
-  // }
+  getSpentPercentage(): number {
+    const spent = this.project()?.stats?.amountSpentSoFarByFounder ?? 0;
+    const invested = this.project()?.stats?.amountInvested ?? 0;
+    if (invested === 0) return 0;
+    return Number(((spent / invested) * 100).toFixed(1));
+  }
+
+  getPenaltiesPercentage(): number {
+    const penalties = this.project()?.stats?.amountInPenalties ?? 0;
+    const invested = this.project()?.stats?.amountInvested ?? 0;
+    if (invested === 0) return 0;
+    return Number(((penalties / invested) * 100).toFixed(1));
+  }
 }
