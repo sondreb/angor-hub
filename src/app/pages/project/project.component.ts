@@ -426,8 +426,8 @@ import { AgoPipe } from '../../pipes/ato.pipe';
         display: flex;
         align-items: flex-start;
         gap: 2rem;
-        margin: 2rem 0;
-        padding: 0 1rem;
+        margin: 2rem;
+        padding: 0;
       }
 
       .project-logo {
@@ -673,7 +673,8 @@ import { AgoPipe } from '../../pipes/ato.pipe';
       .invest-button-container {
         margin-left: auto;
         display: flex;
-        align-items: center;
+        align-items: flex-start;
+        padding-right: 1rem;
       }
 
       .invest-button {
