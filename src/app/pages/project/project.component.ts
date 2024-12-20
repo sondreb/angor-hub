@@ -138,13 +138,13 @@ import NDK, { NDKUser } from '@nostr-dev-kit/ndk';
                 </div>
                 <div class="stat-label">Total Invested</div>
               </div>
-              <div class="stat-card">
+              <div class="stat-card spending-card" [style.--spent-percentage]="((project()?.stats?.amountSpentSoFarByFounder ?? 0) / (project()?.stats?.amountInvested ?? 1)) * 100 + '%'">
                 <div class="stat-value">
                   {{ (project()?.stats?.amountSpentSoFarByFounder ?? 0) / 100000000 }} BTC
                 </div>
                 <div class="stat-label">Amount Spent</div>
               </div>
-              <div class="stat-card">
+              <div class="stat-card penalties-card" [style.--penalties-percentage]="((project()?.stats?.amountInPenalties ?? 0) / (project()?.stats?.amountInvested ?? 1)) * 100 + '%'">
                 <div class="stat-value">
                   {{ (project()?.stats?.amountInPenalties ?? 0) / 100000000 }} BTC
                 </div>
@@ -300,6 +300,52 @@ import NDK, { NDKUser } from '@nostr-dev-kit/ndk';
       .stat-label {
         font-size: 0.9rem;
         opacity: 0.8;
+      }
+
+      .spending-card {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .spending-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: var(--spent-percentage);
+        height: 100%;
+        background: rgba(255, 165, 0, 0.2);
+        z-index: 0;
+        transition: width 0.3s ease;
+      }
+
+      .spending-card .stat-value,
+      .spending-card .stat-label {
+        position: relative;
+        z-index: 1;
+      }
+
+      .penalties-card {
+        position: relative;
+        overflow: hidden;
+      }
+
+      .penalties-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: var(--penalties-percentage);
+        height: 100%;
+        background: rgba(255, 0, 0, 0.2);
+        z-index: 0;
+        transition: width 0.3s ease;
+      }
+
+      .penalties-card .stat-value,
+      .penalties-card .stat-label {
+        position: relative;
+        z-index: 1;
       }
 
       .project-grid {
