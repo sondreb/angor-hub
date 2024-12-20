@@ -1,5 +1,5 @@
 import { Component, OnInit, OnDestroy, inject, signal } from '@angular/core';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute, Router, RouterModule } from '@angular/router';
 import {
   IndexedProject,
   ProjectStats,
@@ -14,7 +14,7 @@ import { AgoPipe } from '../../pipes/ato.pipe';
 @Component({
   selector: 'app-project',
   standalone: true,
-  imports: [CommonModule, BreadcrumbComponent, AgoPipe],
+  imports: [CommonModule, BreadcrumbComponent, AgoPipe, RouterModule],
   template: `
     <!-- <app-breadcrumb
       [items]="[
@@ -112,6 +112,7 @@ import { AgoPipe } from '../../pipes/ato.pipe';
             class="invest-button" 
             [disabled]="isProjectNotStarted()"
             [class.disabled]="isProjectNotStarted()"
+            (click)="!isProjectNotStarted() && openInvestWindow()"
           >
             @if (isProjectNotStarted()) {
               Starts {{ (project()?.details?.startDate ?? 0) | ago }}
@@ -904,6 +905,11 @@ export class ProjectComponent implements OnInit, OnDestroy {
     const startDate = this.project()?.details?.startDate;
     if (!startDate) return true;
     return Date.now() < startDate * 1000;
+  }
+
+  openInvestWindow() {
+    const url = 'https://test.angor.io/view/' + this.project()?.projectIdentifier;
+    window.open(url, '_blank');
   }
 
   // convertToNpub(pubkey: string | undefined): string {
