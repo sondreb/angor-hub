@@ -9,6 +9,7 @@
   --accent: #086c81;
   --accent-dark: #065666;
   --accent-light: #0a8ca7;
+  --surface-card: #f8f9fa;
 }
 
 [data-theme="dark"] {
@@ -20,6 +21,7 @@
   --accent: #0a8ca7;
   --accent-dark: #086c81;
   --accent-light: #0caac9;
+  --surface-card: #242424;
 }
 
 /* Inter Variable Font */
