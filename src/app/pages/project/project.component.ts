@@ -142,13 +142,13 @@ import NDK, { NDKUser } from '@nostr-dev-kit/ndk';
                 <div class="stat-value">
                   {{ (project()?.stats?.amountSpentSoFarByFounder ?? 0) / 100000000 }} BTC
                 </div>
-                <div class="stat-label">Amount Spent</div>
+                <div class="stat-label">Spent ({{ ((project()?.stats?.amountSpentSoFarByFounder ?? 0) / (project()?.stats?.amountInvested ?? 1) * 100).toFixed(1) }}%)</div>
               </div>
               <div class="stat-card penalties-card" [style.--penalties-percentage]="((project()?.stats?.amountInPenalties ?? 0) / (project()?.stats?.amountInvested ?? 1)) * 100 + '%'">
                 <div class="stat-value">
                   {{ (project()?.stats?.amountInPenalties ?? 0) / 100000000 }} BTC
                 </div>
-                <div class="stat-label">Penalties Amount</div>
+                <div class="stat-label">Penalties ({{ ((project()?.stats?.amountInPenalties ?? 0) / (project()?.stats?.amountInvested ?? 1) * 100).toFixed(1) }}%)</div>
               </div>
               <div class="stat-card">
                 <div class="stat-value">
@@ -489,9 +489,9 @@ import NDK, { NDKUser } from '@nostr-dev-kit/ndk';
         display: block;
         font-family: monospace;
         font-size: 0.9rem;
-        overflow: hidden;
-        text-overflow: ellipsis;
-        white-space: nowrap;
+        word-break: break-all;
+        white-space: normal;
+        line-height: 1.4;
       }
 
       .tabs {
