@@ -137,23 +137,30 @@ import { AgoPipe } from '../../pipes/ato.pipe';
           <div class="project-grid">
             <!-- Project Statistics -->
             <section class="stats-grid">
-            <div class="stat-card">
-                <div class="stat-value">
-                {{ project()?.details?.targetAmount }} BTC
+              <div class="stat-card investment-card" [style.--investment-percentage]="((project()?.stats?.amountInvested ?? 0) / ((project()?.details?.targetAmount ?? 1) * 100000000)) * 100 + '%'">
+                <div class="stat-values">
+                  <div>
+                    <div class="stat-value">
+                      {{ (project()?.stats?.amountInvested ?? 0) / 100000000 }} BTC
+                    </div>
+                    <div class="stat-label">Total Invested</div>
+                  </div>
+                  <div>
+                    <div class="stat-value target">
+                      {{ project()?.details?.targetAmount }} BTC
+                    </div>
+                    <div class="stat-label">Target Amount</div>
+                  </div>
                 </div>
-                <div class="stat-label">Target Amount</div>
+                <div class="stat-percentage">
+                  {{ ((project()?.stats?.amountInvested ?? 0) / ((project()?.details?.targetAmount ?? 1) * 100000000) * 100).toFixed(1) }}%
+                </div>
               </div>
               <div class="stat-card">
                 <div class="stat-value">
                   {{ project()?.stats?.investorCount }}
                 </div>
                 <div class="stat-label">Total Investors</div>
-              </div>
-              <div class="stat-card">
-                <div class="stat-value">
-                  {{ (project()?.stats?.amountInvested ?? 0) / 100000000 }} BTC
-                </div>
-                <div class="stat-label">Total Invested</div>
               </div>
               <div class="stat-card spending-card" [style.--spent-percentage]="((project()?.stats?.amountSpentSoFarByFounder ?? 0) / (project()?.stats?.amountInvested ?? 1)) * 100 + '%'">
                 <div class="stat-value">
@@ -367,6 +374,45 @@ import { AgoPipe } from '../../pipes/ato.pipe';
       .penalties-card .stat-label {
         position: relative;
         z-index: 1;
+      }
+
+      .investment-card {
+        position: relative;
+        overflow: hidden;
+        grid-column: span 2;
+      }
+
+      .investment-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: var(--investment-percentage);
+        height: 100%;
+        background: rgba(0, 255, 0, 0.1);
+        z-index: 0;
+        transition: width 0.3s ease;
+      }
+
+      .stat-values {
+        display: flex;
+        justify-content: space-between;
+        align-items: flex-start;
+        position: relative;
+        z-index: 1;
+      }
+
+      .stat-percentage {
+        position: absolute;
+        bottom: 1rem;
+        right: 1.5rem;
+        font-size: 0.9rem;
+        opacity: 0.7;
+      }
+
+      .stat-value.target {
+        opacity: 0.7;
+        font-size: 1.2rem;
       }
 
       .project-grid {
