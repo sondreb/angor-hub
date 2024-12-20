@@ -596,6 +596,29 @@ import { AgoPipe } from '../../pipes/ato.pipe';
         position: relative;
         transition: all 0.3s ease;
         opacity: 0.7;
+        flex: 1;
+      }
+
+      @media (max-width: 540px) {
+        .tabs {
+          gap: 0.5rem;
+          margin: 1rem;
+        }
+
+        .tabs button {
+          padding: 0.75rem 0.5rem;
+          min-width: 0;
+          text-align: center;
+        }
+        
+        .tab-text {
+          display: none;
+        }
+        
+        .tab-icon {
+          display: inline;
+          font-size: 1.2rem;
+        }
       }
 
       .tabs button:hover {
