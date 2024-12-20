@@ -327,7 +327,6 @@ import { AgoPipe } from '../../pipes/ato.pipe';
         display: grid;
         grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
         gap: 1.5rem;
-        margin-top: 2rem;
       }
 
       .stat-card {
