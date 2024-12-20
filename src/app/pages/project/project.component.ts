@@ -5,15 +5,16 @@ import {
   ProjectStats,
   IndexerService,
 } from '../../services/indexer.service';
-import { CommonModule } from '@angular/common';
+import { CommonModule, DatePipe } from '@angular/common';
 import { BreadcrumbComponent } from '../../components/breadcrumb.component';
 import { RelayService } from '../../services/relay.service';
 import NDK, { NDKUser } from '@nostr-dev-kit/ndk';
+import { AgoPipe } from '../../pipes/ato.pipe';
 
 @Component({
   selector: 'app-project',
   standalone: true,
-  imports: [CommonModule, BreadcrumbComponent],
+  imports: [CommonModule, BreadcrumbComponent, AgoPipe],
   template: `
     <!-- <app-breadcrumb
       [items]="[
@@ -104,10 +105,20 @@ import NDK, { NDKUser } from '@nostr-dev-kit/ndk';
           >
           njump
           </a>
-
-
-          
           }
+        </div>
+        <div class="invest-button-container">
+          <button 
+            class="invest-button" 
+            [disabled]="isProjectNotStarted()"
+            [class.disabled]="isProjectNotStarted()"
+          >
+            @if (isProjectNotStarted()) {
+              Starts {{ (project()?.details?.startDate ?? 0) | ago }}
+            } @else {
+              Invest Now
+            }
+          </button>
         </div>
       </div>
 
@@ -611,6 +622,37 @@ import NDK, { NDKUser } from '@nostr-dev-kit/ndk';
       .comments-tab {
         margin: 2rem;
       }
+
+      .invest-button-container {
+        margin-left: auto;
+        display: flex;
+        align-items: center;
+      }
+
+      .invest-button {
+        padding: 1rem 2rem;
+        font-size: 1.2rem;
+        font-weight: bold;
+        color: white;
+        background: var(--accent);
+        border: none;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        min-width: 200px;
+      }
+
+      .invest-button:hover:not(.disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      }
+
+      .invest-button.disabled {
+        background: var(--surface-card);
+        color: var(--text-color-secondary);
+        cursor: not-allowed;
+        font-size: 1rem;
+      }
     `,
   ],
 })
@@ -810,6 +852,12 @@ export class ProjectComponent implements OnInit, OnDestroy {
       month: 'long',
       day: 'numeric',
     });
+  }
+
+  isProjectNotStarted(): boolean {
+    const startDate = this.project()?.details?.startDate;
+    if (!startDate) return true;
+    return Date.now() < startDate * 1000;
   }
 
   // convertToNpub(pubkey: string | undefined): string {
