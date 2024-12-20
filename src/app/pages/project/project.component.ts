@@ -88,11 +88,13 @@ import { ImagePopupComponent } from '../../components/image-popup.component';
       <div class="project-header">
         @if (project()?.metadata?.['picture']) {
         <img
+          #projectImage
           [src]="project()?.metadata?.['picture']"
           class="project-logo"
           alt="Project logo"
           (click)="showImagePopup = true"
           [style.cursor]="'pointer'"
+          loading="eager"
         />
         }
         <div class="project-title-content">
@@ -144,7 +146,7 @@ import { ImagePopupComponent } from '../../components/image-popup.component';
 
       @if (showImagePopup && project()?.metadata?.['picture']) {
         <app-image-popup
-          [imageUrl]="(project()?.metadata?.['picture']?.toString() || '')"
+          [imageUrl]="project()?.metadata?.['picture']?.toString() || ''"
           altText="Project logo"
           (close)="showImagePopup = false"
         ></app-image-popup>
