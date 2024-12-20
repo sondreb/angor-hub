@@ -145,7 +145,8 @@ import { AgoPipe } from '../../pipes/ato.pipe';
           [class.active]="activeTab === tab.id"
           (click)="setActiveTab(tab.id)"
         >
-          {{ tab.label }}
+          <span class="tab-text">{{ tab.label }}</span>
+          <span class="tab-icon">{{ tab.icon }}</span>
         </button>
       </div>
 
@@ -619,6 +620,25 @@ import { AgoPipe } from '../../pipes/ato.pipe';
         border-radius: 2px 2px 0 0;
       }
 
+      .tab-icon {
+        display: none;
+      }
+
+      @media (max-width: 540px) {
+        .tab-text {
+          display: none;
+        }
+        
+        .tab-icon {
+          display: inline;
+          font-size: 1.2rem;
+        }
+
+        .tabs button {
+          padding: 0.75rem 1rem;
+        }
+      }
+
       .update-card,
       .comment-card {
         background: var(--surface-card);
@@ -758,10 +778,10 @@ export class ProjectComponent implements OnInit, OnDestroy {
   projectId: string = '';
 
   tabs = [
-    { id: 'project', label: 'Project' },
-    { id: 'faq', label: 'FAQ' },
-    { id: 'updates', label: 'Updates' },
-    { id: 'comments', label: 'Comments' },
+    { id: 'project', label: 'Project', icon: '📋' },
+    { id: 'faq', label: 'FAQ', icon: '❓' },
+    { id: 'updates', label: 'Updates', icon: '📢' },
+    { id: 'comments', label: 'Comments', icon: '💬' },
   ];
   activeTab = 'project';
   updates = signal<any[]>([]);
