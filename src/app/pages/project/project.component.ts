@@ -126,6 +126,12 @@ import NDK, { NDKUser } from '@nostr-dev-kit/ndk';
           <div class="project-grid">
             <!-- Project Statistics -->
             <section class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">
+                {{ project()?.details?.targetAmount }} BTC
+                </div>
+                <div class="stat-label">Target Amount</div>
+              </div>
               <div class="stat-card">
                 <div class="stat-value">
                   {{ project()?.stats?.investorCount }}
@@ -161,35 +167,11 @@ import NDK, { NDKUser } from '@nostr-dev-kit/ndk';
             <!-- Project Details -->
             <section class="project-details">
               <h2>Project Details</h2>
-              <div class="info-stack">
-                <div class="info-item">
-                  <label>Project ID</label>
-                  <span class="ellipsis">{{
-                    project()?.projectIdentifier
-                  }}</span>
-                </div>
-                <div class="info-item">
-                  <label>Founder Key</label>
-                  <span class="ellipsis">{{ project()?.founderKey }}</span>
-                </div>
-                <div class="info-item">
-                  <label>Recovery Key</label>
-                  <span class="ellipsis">{{
-                    project()?.details?.founderRecoveryKey
-                  }}</span>
-                </div>
-                <div class="info-item">
-                  <label>Nostr Public Key</label>
-                  <span class="ellipsis">
-                    {{ user?.npub }}
-                  </span>
-                </div>
-              </div>
               <div class="info-grid">
-                <div class="info-item">
+                <!-- <div class="info-item">
                   <label>Target Amount</label>
                   <span>{{ project()?.details?.targetAmount }} BTC</span>
-                </div>
+                </div> -->
                 <div class="info-item">
                   <label>Penalty Days</label>
                   <span>{{ project()?.details?.penaltyDays }} days</span>
@@ -218,6 +200,34 @@ import NDK, { NDKUser } from '@nostr-dev-kit/ndk';
                   </div>
                 </div>
                 }
+              </div>
+            </section>
+
+            <section class="project-details">
+              <h2>Public Keys</h2>
+              <div class="info-stack">
+                <div class="info-item">
+                  <label>Project ID</label>
+                  <span class="ellipsis">{{
+                    project()?.projectIdentifier
+                  }}</span>
+                </div>
+                <div class="info-item">
+                  <label>Founder Key</label>
+                  <span class="ellipsis">{{ project()?.founderKey }}</span>
+                </div>
+                <div class="info-item">
+                  <label>Recovery Key</label>
+                  <span class="ellipsis">{{
+                    project()?.details?.founderRecoveryKey
+                  }}</span>
+                </div>
+                <div class="info-item">
+                  <label>Nostr Public Key</label>
+                  <span class="ellipsis">
+                    {{ user?.npub }}
+                  </span>
+                </div>
               </div>
             </section>
           </div>
