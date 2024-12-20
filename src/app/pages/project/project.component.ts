@@ -10,11 +10,12 @@ import { BreadcrumbComponent } from '../../components/breadcrumb.component';
 import { RelayService } from '../../services/relay.service';
 import NDK, { NDKUser } from '@nostr-dev-kit/ndk';
 import { AgoPipe } from '../../pipes/ato.pipe';
+import { ImagePopupComponent } from '../../components/image-popup.component';
 
 @Component({
   selector: 'app-project',
   standalone: true,
-  imports: [CommonModule, BreadcrumbComponent, AgoPipe, RouterModule],
+  imports: [CommonModule, BreadcrumbComponent, AgoPipe, RouterModule, ImagePopupComponent],
   template: `
     <!-- <app-breadcrumb
       [items]="[
@@ -90,6 +91,8 @@ import { AgoPipe } from '../../pipes/ato.pipe';
           [src]="project()?.metadata?.['picture']"
           class="project-logo"
           alt="Project logo"
+          (click)="showImagePopup = true"
+          [style.cursor]="'pointer'"
         />
         }
         <div class="project-title-content">
@@ -138,6 +141,14 @@ import { AgoPipe } from '../../pipes/ato.pipe';
           </button>
         </div>
       </div>
+
+      @if (showImagePopup && project()?.metadata?.['picture']) {
+        <app-image-popup
+          [imageUrl]="(project()?.metadata?.['picture']?.toString() || '')"
+          altText="Project logo"
+          (close)="showImagePopup = false"
+        ></app-image-popup>
+      }
 
       <div class="tabs">
         <button
@@ -809,6 +820,7 @@ export class ProjectComponent implements OnInit, OnDestroy {
   updates = signal<any[]>([]);
   comments = signal<any[]>([]);
   loading = signal<boolean>(false);
+  showImagePopup = false;
 
   setActiveTab(tabId: string) {
     this.activeTab = tabId;
